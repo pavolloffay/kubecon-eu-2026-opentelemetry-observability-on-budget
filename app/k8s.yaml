@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: backend1
-        image: ghcr.io/pavolloffay/kubecon-eu-2024-opentelemetry-kubernetes-tracing-tutorial-backend1:latest
+        image: ghcr.io/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget-backend1:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
@@ -70,7 +70,7 @@ spec:
     spec:
       containers:
       - name: backend2
-        image: ghcr.io/pavolloffay/kubecon-eu-2024-opentelemetry-kubernetes-tracing-tutorial-backend2:latest
+        image: ghcr.io/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget-backend2:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5165
@@ -113,7 +113,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ghcr.io/pavolloffay/kubecon-eu-2024-opentelemetry-kubernetes-tracing-tutorial-frontend:latest
+        image: ghcr.io/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget-frontend:latest
         imagePullPolicy: IfNotPresent
         env:
           - name: OTEL_INSTRUMENTATION_ENABLED
@@ -141,28 +141,3 @@ spec:
     targetPort: 4000
   selector:
     app: frontend
----
-#apiVersion: apps/v1
-#kind: Deployment
-#metadata:
-#  name: loadgen-deployment
-#  namespace: tutorial-application
-#  labels:
-#    app: loadgen
-#spec:
-#  replicas: 1
-#  selector:
-#    matchLabels:
-#      app: loadgen
-#  template:
-#    metadata:
-#      labels:
-#        app: loadgen
-#    spec:
-#      containers:
-#      - name: frontend
-#        image: ghcr.io/pavolloffay/kubecon-eu-2024-opentelemetry-kubernetes-tracing-tutorial-loadgen:latest
-#        imagePullPolicy: IfNotPresent
-#        env:
-#          - name: URL
-#            value: "http://frontend-service:4000/"
