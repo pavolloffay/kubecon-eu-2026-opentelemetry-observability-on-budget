@@ -1,6 +1,6 @@
 # Sample Application
 
-This is the source code of the sample application used in the tutorial step [Deploy the application](../03-app-instrumentation.md).
+This is the source code of the sample application used in the tutorial.
 
 ## Usage
 
