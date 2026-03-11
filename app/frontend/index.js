@@ -61,7 +61,6 @@ app.get("/", (req, res) => {
       response.on("end", () => {
         try {
           const result = JSON.parse(Buffer.concat(data).toString());
-          res.write(player1 + " rolls: " + result + "\n");
           resolve(result);
         } catch(error) {
           reject(error)
@@ -83,7 +82,6 @@ app.get("/", (req, res) => {
       response.on("end", () => {
         try {
           const result = Buffer.concat(data).toString();
-          res.write(player2 + " rolls: " + result + "\n");
           resolve(result);
         } catch(error) {
           reject(error)
@@ -105,7 +103,6 @@ app.get("/", (req, res) => {
       response.on("end", () => {
         try {
           const result = Buffer.concat(data).toString();
-          res.write(player3 + " rolls: " + result + "\n");
           resolve(result);
         } catch(error) {
           reject(error)
@@ -118,6 +115,10 @@ app.get("/", (req, res) => {
   });
 
   Promise.all([p1, p2, p3]).then(([roll1, roll2, roll3]) => {
+    res.write(player1 + " rolls: " + roll1 + "\n");
+    res.write(player2 + " rolls: " + roll2 + "\n");
+    res.write(player3 + " rolls: " + roll3 + "\n");
+
     let winner = 'Nobody'
     let winnerRolled = 0
     const rolls = [

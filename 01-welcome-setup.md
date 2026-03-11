@@ -98,6 +98,12 @@ Clone the repository to your local machine. We will be modifying the demo applic
 git clone git@github.com:pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget.git
 ```
 
+Run the build to cache docker images:
+
+```bash
+make docker-build
+```
+
 ---
 
 [Next steps](./02-tracing-introduction.md)

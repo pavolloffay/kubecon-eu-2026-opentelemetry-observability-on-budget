@@ -1,13 +1,16 @@
-FROM gradle:8.4-jdk21 AS builder
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /usr/src/app
 
-COPY build.gradle settings.gradle ./
+COPY gradlew ./
 COPY gradle ./gradle
-RUN gradle dependencies --no-daemon
+RUN ./gradlew --version --no-daemon
+
+COPY build.gradle settings.gradle ./
+RUN ./gradlew dependencies --no-daemon
 
 COPY src ./src
-RUN gradle bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /usr/src/app
