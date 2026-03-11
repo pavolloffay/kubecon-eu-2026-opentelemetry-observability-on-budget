@@ -1,15 +1,18 @@
-FROM golang:1.22 as builder
+FROM golang:1.24 AS builder
 
 WORKDIR /src
 
-COPY . /src
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
 
 RUN CGO_ENABLED=0 go build -v -o /app
 
 FROM scratch
 
-COPY --from=0 /app /app
+COPY --from=builder /app /app
 
-EXPOSE 8080
+EXPOSE 5165
 
 CMD ["/app"]
