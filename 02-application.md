@@ -42,6 +42,8 @@ Deploy the application into the kubernetes cluster. The app will be deployed int
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/k8s.yaml
+```
+```bash
 kubectl get pods -n tutorial-application -w
 ...
 NAME                                   READY   STATUS    RESTARTS   AGE
