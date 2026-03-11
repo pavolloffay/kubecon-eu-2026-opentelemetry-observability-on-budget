@@ -18,6 +18,7 @@ Each tutorial step is located in a separate file:
 
 1. [Welcome & Setup](01-welcome-setup.md) (5 min)
 1. [Sampling overview](02-sampling-overview.md) (10 min)
+1. [Demo application](03-application.md) (5 min)
 1. [Data profiling]() (10 min)
 1. [Head based sampling]() (10 minutes)
 1. [Tail based sampling]() (20 minutes)

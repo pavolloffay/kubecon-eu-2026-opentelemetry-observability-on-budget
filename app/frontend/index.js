@@ -61,7 +61,7 @@ app.get("/", (req, res) => {
       response.on("end", () => {
         try {
           const result = JSON.parse(Buffer.concat(data).toString());
-          res.write("Player 1 rolls: " + result + "\n");
+          res.write(player1 + " rolls: " + result + "\n");
           resolve(result);
         } catch(error) {
           reject(error)
@@ -83,7 +83,7 @@ app.get("/", (req, res) => {
       response.on("end", () => {
         try {
           const result = Buffer.concat(data).toString();
-          res.write("Player 2 rolls: " + result + "\n");
+          res.write(player2 + " rolls: " + result + "\n");
           resolve(result);
         } catch(error) {
           reject(error)
@@ -105,7 +105,7 @@ app.get("/", (req, res) => {
       response.on("end", () => {
         try {
           const result = Buffer.concat(data).toString();
-          res.write("Player 3 rolls: " + result + "\n");
+          res.write(player3 + " rolls: " + result + "\n");
           resolve(result);
         } catch(error) {
           reject(error)

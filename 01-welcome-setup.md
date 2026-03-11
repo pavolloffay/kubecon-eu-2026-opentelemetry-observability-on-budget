@@ -89,6 +89,15 @@ kubectl port-forward -n observability-backend service/jaeger-query 16686:16686
 
 Open it in the browser [localhost:16686](http://localhost:16686/)
 
+
+## Clone the repository
+
+Clone the repository to your local machine. We will be modifying the demo application.
+
+```bash
+git clone git@github.com:pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget.git
+```
+
 ---
 
 [Next steps](./02-tracing-introduction.md)
