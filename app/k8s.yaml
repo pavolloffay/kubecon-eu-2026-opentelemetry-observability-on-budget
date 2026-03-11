@@ -95,6 +95,49 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: backend3-deployment
+  namespace: tutorial-application
+  labels:
+    app: backend3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend3
+  template:
+    metadata:
+      labels:
+        app: backend3
+      annotations:
+        prometheus.io/scrape: "true"
+    spec:
+      containers:
+      - name: backend3
+        image: ghcr.io/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget-backend3:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5165
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend3-service
+  namespace: tutorial-application
+  labels:
+    app: backend3
+  annotations:
+    prometheus.io/scrape: "true"
+spec:
+  ports:
+  - name: http
+    port: 5165
+    targetPort: 5165
+  selector:
+    app: backend3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: frontend-deployment
   namespace: tutorial-application
   labels:
@@ -122,6 +165,8 @@ spec:
             value: "http://backend1-service:5000/rolldice"
           - name: BACKEND2_URL
             value: "http://backend2-service:5165/rolldice"
+          - name: BACKEND3_URL
+            value: "http://backend3-service:5165/rolldice"
         ports:
         - containerPort: 4000
 ---

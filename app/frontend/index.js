@@ -16,6 +16,8 @@ const backend1url =
   process.env.BACKEND1_URL || "http://localhost:5165/rolldice";
 const backend2url =
   process.env.BACKEND2_URL || "http://localhost:5000/rolldice";
+const backend3url =
+  process.env.BACKEND3_URL || "http://localhost:5165/rolldice";
 
 const myMeter = metrics.getMeter("app-meter");
 const requestCounter = myMeter.createCounter('request_total', {
@@ -33,12 +35,15 @@ const winCounter = myMeter.createUpDownCounter('app_wins_total', {
 
 app.get("/", (req, res) => {
   requestCounter.add(1);
-  const { player1, player2 } = Object.assign({player1: "Player 1", player2: "Player 2"}, req.query)
+  const { player1, player2, player3 } = Object.assign({player1: "Player 1", player2: "Player 2", player3: "Player 3"}, req.query)
   if(player1 == 'Player 1') {
     req.log.info('Player 1 prefers to stay anonymous.')
   }
   if(player2 == 'Player 2') {
     req.log.info('Player 2 prefers to stay anonymous.')
+  }
+  if(player3 == 'Player 3') {
+    req.log.info('Player 3 prefers to stay anonymous.')
   }
   span = trace.getSpan(context.active())
   if(span) {
@@ -90,15 +95,45 @@ app.get("/", (req, res) => {
     }).end()
   });
 
-  Promise.all([p1, p2]).then(([roll1, roll2]) => {
+  const p3 = new Promise((resolve, reject) => {
+    http.get(`${backend3url}?player=${player3}`, (response) => {
+      let data = [];
+
+      response.on("data", (chunk) => {
+        data.push(chunk);
+      });
+      response.on("end", () => {
+        try {
+          const result = Buffer.concat(data).toString();
+          res.write("Player 3 rolls: " + result + "\n");
+          resolve(result);
+        } catch(error) {
+          reject(error)
+        }
+      });
+    }).on('error', (error) => {
+      req.log.error("Backend3 is not available.")
+      reject(error)
+    }).end()
+  });
+
+  Promise.all([p1, p2, p3]).then(([roll1, roll2, roll3]) => {
     let winner = 'Nobody'
     let winnerRolled = 0
-    if (roll1 > roll2) {
-      winner = player1
-      winnerRolled = roll1
-    } else if (roll2 > roll1) {
-      winner = player2
-      winnerRolled = roll2
+    const rolls = [
+      { player: player1, roll: Number(roll1) },
+      { player: player2, roll: Number(roll2) },
+      { player: player3, roll: Number(roll3) },
+    ];
+    rolls.forEach(({ player, roll }) => {
+      if (roll > winnerRolled) {
+        winner = player;
+        winnerRolled = roll;
+      }
+    });
+    // Check for tie
+    if (rolls.filter(r => r.roll === winnerRolled).length > 1) {
+      winner = 'Nobody';
     }
     // TODO(tracing): Add the winner as a span attribute
 

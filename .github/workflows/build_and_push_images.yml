@@ -18,7 +18,7 @@ jobs:
           - frontend
           - backend1
           - backend2
-          - backend4
+          - backend3
           - loadgen
 
     steps:

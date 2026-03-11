@@ -32,7 +32,8 @@ spec:
                 PLAYERS=$(printf 'Pavol\nBenedikt\nYuri\nKristina\nSeverin' | shuf)
                 P1=$(echo "$PLAYERS" | sed -n '1p')
                 P2=$(echo "$PLAYERS" | sed -n '2p')
-                timeout 5 curl -s "${URL}?player1=${P1}&player2=${P2}" &
+                P3=$(echo "$PLAYERS" | sed -n '3p')
+                timeout 5 curl -s "${URL}?player1=${P1}&player2=${P2}&player3=${P3}" &
                 sleep 1
               done
               wait

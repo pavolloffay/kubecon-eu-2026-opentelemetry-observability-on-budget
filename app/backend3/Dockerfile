@@ -1,20 +1,15 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-env
-WORKDIR /App
+FROM golang:1.22 as builder
 
-# Copy everything
-COPY . ./
-# Restore as distinct layers
-RUN dotnet restore
-# Build and publish a release
-RUN dotnet publish -c Release -o out
+WORKDIR /src
 
-# Build runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:7.0
-WORKDIR /App
-COPY --from=build-env /App/out .
+COPY . /src
 
-# https://stackoverflow.com/a/67111195
-ENV DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE=false
-ENV ASPNETCORE_URLS="http://*:5165"
+RUN CGO_ENABLED=0 go build -v -o /app
 
-ENTRYPOINT ["dotnet", "backend3.dll"]
+FROM scratch
+
+COPY --from=0 /app /app
+
+EXPOSE 8080
+
+CMD ["/app"]
