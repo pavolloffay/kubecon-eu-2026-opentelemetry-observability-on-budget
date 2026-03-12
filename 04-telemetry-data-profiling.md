@@ -40,6 +40,10 @@ The Count Connector counts spans, metric data points, and log records passing th
 
 Add the following to the collector configuration:
 
+```bash
+kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/refs/heads/main/app/03-collector-data-profiling.yaml
+```
+
 ```yaml
 connectors:
   count:

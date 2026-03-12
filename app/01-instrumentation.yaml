@@ -22,6 +22,10 @@ spec:
       # so data must be sent to 4318 instead of 4317.
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
         value: http://otel-collector.tutorial-application.svc.cluster.local:4318
+      - name: OTEL_LOGS_EXPORTER
+        value: otlp
+      - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
+        value: "true"
   nodejs:
     env:
       # Required if endpoint is set to 4317.
