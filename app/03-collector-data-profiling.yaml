@@ -67,6 +67,13 @@ spec:
             attributes:
               - key: service.name
               - key: k8s.namespace.name
+          telemetry.logs.attributes10:
+            description: "logs with more than 10 attributes"
+            conditions:
+              - Len(attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
           telemetry.logs.body1000:
             description: "Log records with body larger than 1000 bytes"
             conditions:

@@ -139,28 +139,11 @@ func main() {
 		resStr := strconv.Itoa(result)
 		slog.InfoContext(r.Context(), "dice rolled", "player", player, "result", result)
 		// TODO: remove before production - debug logging for troubleshooting dice bias issue
-		slog.DebugContext(r.Context(), "DEBUG dice roll diagnostics",
-			"player", player,
-			"result", result,
-			"max", max,
-			"request_headers", fmt.Sprintf("%v", r.Header),
-			"request_url", r.URL.String(),
-			"request_remote_addr", r.RemoteAddr,
-			"request_host", r.Host,
-			"request_method", r.Method,
-			"request_content_length", r.ContentLength,
-			"request_proto", r.Proto,
-			"request_user_agent", r.UserAgent(),
-			"request_referer", r.Referer(),
-			"request_cookies", fmt.Sprintf("%v", r.Cookies()),
-			"request_form", fmt.Sprintf("%v", r.Form),
-			"env_RATE_ERROR", os.Getenv("RATE_ERROR"),
-			"env_RATE_HIGH_DELAY", os.Getenv("RATE_HIGH_DELAY"),
-			"env_OTEL_EXPORTER_OTLP_ENDPOINT", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
-			"env_OTEL_SERVICE_NAME", os.Getenv("OTEL_SERVICE_NAME"),
-			"env_OTEL_RESOURCE_ATTRIBUTES", os.Getenv("OTEL_RESOURCE_ATTRIBUTES"),
-			"stack_trace", fmt.Sprintf("goroutine 1 [running]:\nmain.rolldice()\n\t/app/main.go:115\nmain.main()\n\t/app/main.go:97\nruntime.main()\n\t/usr/local/go/src/runtime/proc.go:267\ngoroutine 2 [running]:\nmain.handler()\n\t/app/main.go:88\nnet/http.HandlerFunc.ServeHTTP()\n\t/usr/local/go/src/net/http/server.go:2136"),
-		)
+		debugMsg := fmt.Sprintf("DEBUG dice roll diagnostics: player=%s result=%d max=%d request_headers=%v request_url=%s request_remote_addr=%s request_host=%s request_method=%s request_content_length=%d request_proto=%s request_user_agent=%s request_referer=%s request_cookies=%v request_form=%v env_RATE_ERROR=%s env_RATE_HIGH_DELAY=%s env_OTEL_EXPORTER_OTLP_ENDPOINT=%s env_OTEL_SERVICE_NAME=%s env_OTEL_RESOURCE_ATTRIBUTES=%s stack_trace=%s",
+			player, result, max, r.Header, r.URL.String(), r.RemoteAddr, r.Host, r.Method, r.ContentLength, r.Proto, r.UserAgent(), r.Referer(), r.Cookies(), r.Form,
+			os.Getenv("RATE_ERROR"), os.Getenv("RATE_HIGH_DELAY"), os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("OTEL_SERVICE_NAME"), os.Getenv("OTEL_RESOURCE_ATTRIBUTES"),
+			"goroutine 1 [running]:\nmain.rolldice()\n\t/app/main.go:115\nmain.main()\n\t/app/main.go:97\nruntime.main()\n\t/usr/local/go/src/runtime/proc.go:267\ngoroutine 2 [running]:\nmain.handler()\n\t/app/main.go:88\nnet/http.HandlerFunc.ServeHTTP()\n\t/usr/local/go/src/net/http/server.go:2136")
+		slog.DebugContext(r.Context(), debugMsg)
 		rollCounter.Add(r.Context(), 1)
 		numbersCounter.Add(r.Context(), 1, otelmetric.WithAttributes(attribute.String("number", resStr)))
 		if _, err := w.Write([]byte(resStr)); err != nil {
