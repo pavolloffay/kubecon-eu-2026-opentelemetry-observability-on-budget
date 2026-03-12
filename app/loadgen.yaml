@@ -31,6 +31,6 @@ spec:
               P1=$(echo "$PLAYERS" | sed -n '1p')
               P2=$(echo "$PLAYERS" | sed -n '2p')
               P3=$(echo "$PLAYERS" | sed -n '3p')
-              timeout 5 curl -s "${URL}?player1=${P1}&player2=${P2}&player3=${P3}" > /dev/null
-              sleep 1
+              timeout 5 curl -s "${URL}?player1=${P1}&player2=${P2}&player3=${P3}" > /dev/null &
+              sleep 0.5
             done

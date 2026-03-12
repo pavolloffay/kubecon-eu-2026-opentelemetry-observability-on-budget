@@ -30,10 +30,10 @@ spec:
             attributes:
               - key: service.name
               - key: k8s.namespace.name
-          telemetry.spans.attributes20:
-            description: "Spans with more than 20 attributes"
+          telemetry.spans.attributes10:
+            description: "Spans with more than 10 attributes"
             conditions:
-              - Len(attributes) > 20
+              - Len(attributes) > 10
             attributes:
               - key: service.name
               - key: k8s.namespace.name
@@ -63,10 +63,31 @@ spec:
             attributes:
               - key: service.name
               - key: k8s.namespace.name
-          telemetry.metrics.attributes20:
-            description: "Metric data points with more than 20 attributes"
+          telemetry.metrics.attributes5:
+            description: "metric data points with more than 5 attributes"
             conditions:
-              - Len(attributes) > 20
+              - Len(attributes) > 5
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.attributes10:
+            description: "metric data points with more than 10 attributes"
+            conditions:
+              - Len(attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.resourceattributes5:
+            description: "metric data points with more than 5 resource attributes"
+            conditions:
+              - Len(resource.attributes) > 5
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.resourceattributes10:
+            description: "metric data points with more than 10 resource attributes"
+            conditions:
+              - Len(resource.attributes) > 10
             attributes:
               - key: service.name
               - key: k8s.namespace.name
@@ -79,6 +100,8 @@ spec:
 
       debug:
         verbosity: basic
+      debug/logs:
+        verbosity: detailed
 
     service:
       telemetry:
@@ -111,4 +134,4 @@ spec:
         logs:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp_grpc, debug, count]
+          exporters: [otlp_grpc, debug/logs, count]

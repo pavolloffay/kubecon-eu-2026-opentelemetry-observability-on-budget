@@ -24,14 +24,14 @@ const requestCounter = myMeter.createCounter('request_total', {
   description: "Counter of requests",
   valueType: ValueType.INT
 })
-const gameCounter = myMeter.createUpDownCounter('app_games_total', {
-  description: "A counter of how often the game has been played",
-  valueType: ValueType.INT
-})
-const winCounter = myMeter.createUpDownCounter('app_wins_total', {
-  description: "A counter per player who has won",
-  valueType: ValueType.INT
-})
+// const gameCounter = myMeter.createCounter('app_games_total', {
+//   description: "A counter of how often the game has been played",
+//   valueType: ValueType.INT
+// })
+// const winCounter = myMeter.createCounter('app_wins_total', {
+//   description: "A counter per player who has won",
+//   valueType: ValueType.INT
+// })
 
 app.get("/", (req, res) => {
   requestCounter.add(1);
@@ -139,7 +139,7 @@ app.get("/", (req, res) => {
     // TODO(tracing): Add the winner as a span attribute
 
     // Count the total number of games
-    gameCounter.add(1);
+    // gameCounter.add(1);
 
     // TODO (metrics): count how often each player wins - winCounter
     // use app.winner tag

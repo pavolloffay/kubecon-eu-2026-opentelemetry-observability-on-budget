@@ -1,5 +1,7 @@
 # Telemetry Data Profiling
 
+Telemetry data profiling allows you to understand how much telemetry is flowing through the system and what workloads are sending the most telemetry.
+
 ## Understand which workloads and how much data they send
 
 ### Collector internal metrics
@@ -12,6 +14,21 @@ The OpenTelemetry Collector exposes internal metrics that help understand how mu
 - [Log records accepted and refused per second](http://localhost:9090/graph?g0.expr=rate(otelcol_receiver_accepted_log_records_total[5m])&g0.tab=0&g0.range_input=1h&g1.expr=rate(otelcol_receiver_refused_log_records_total[5m])&g1.tab=0&g1.range_input=1h)
 - [Queue size and capacity](http://localhost:9090/graph?g0.expr=otelcol_exporter_queue_size&g0.tab=0&g0.range_input=1h&g1.expr=otelcol_exporter_queue_capacity&g1.tab=0&g1.range_input=1h)
 
+
+```yaml
+    service:
+      telemetry:
+        metrics:
+          readers:
+            - periodic:
+                exporter:
+                  otlp:
+                    protocol: grpc
+                    endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+                    insecure: true
+```
+
+Full configuration is in [](./app/00-collector.yaml)
 
 ### Profile telemetry data per workload
 
@@ -86,10 +103,10 @@ Add the following to the count connector configuration:
 connectors:
   count:
     spans:
-      telemetry.spans.attributes20:
-        description: "Spans with more than 20 attributes"
+      telemetry.spans.attributes10:
+        description: "Spans with more than 10 attributes"
         conditions:
-          - Len(attributes) > 20
+          - Len(attributes) > 10
         attributes:
           - key: service.name
           - key: k8s.namespace.name
@@ -109,20 +126,44 @@ connectors:
           - key: service.name
           - key: k8s.namespace.name
     datapoints:
-      telemetry.metrics.attributes20:
-        description: "Metric data points with more than 20 attributes"
+      telemetry.metrics.attributes5:
+        description: "Metric data points with more than 5 attributes"
         conditions:
-          - Len(attributes) > 20
+          - Len(attributes) > 5
+        attributes:
+          - key: service.name
+          - key: k8s.namespace.name
+      telemetry.metrics.attributes10:
+        description: "Metric data points with more than 10 attributes"
+        conditions:
+          - Len(attributes) > 10
+        attributes:
+          - key: service.name
+          - key: k8s.namespace.name
+      telemetry.metrics.resourceattributes5:
+        description: "Metric data points with more than 5 resource attributes"
+        conditions:
+          - Len(resource.attributes) > 5
+        attributes:
+          - key: service.name
+          - key: k8s.namespace.name
+      telemetry.metrics.resourceattributes10:
+        description: "Metric data points with more than 10 resource attributes"
+        conditions:
+          - Len(resource.attributes) > 10
         attributes:
           - key: service.name
           - key: k8s.namespace.name
 ```
 
-- [All size profiling metrics](http://localhost:9090/graph?g0.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_attributes20_total[5m]))&g0.tab=0&g0.range_input=1h&g1.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_dropped_attributes_total[5m]))&g1.tab=0&g1.range_input=1h&g2.expr=sum%20by%20(service_name)%20(rate(telemetry_logs_body1000_total[5m]))&g2.tab=0&g2.range_input=1h&g3.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_attributes20_total[5m]))&g3.tab=0&g3.range_input=1h)
+![Span attribute](./images/p8s-profiling-span-attributes.png)
+![Metric attributes](./images/p8s-profiling-metrics-resource-attributes.png)
+
+- [All size profiling metrics](http://localhost:9090/graph?g0.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_attributes10_total[5m]))&g0.tab=0&g0.range_input=1h&g1.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_dropped_attributes_total[5m]))&g1.tab=0&g1.range_input=1h&g2.expr=sum%20by%20(service_name)%20(rate(telemetry_logs_body1000_total[5m]))&g2.tab=0&g2.range_input=1h&g3.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_attributes5_total[5m]))&g3.tab=0&g3.range_input=1h&g4.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_attributes10_total[5m]))&g4.tab=0&g4.range_input=1h&g5.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_resourceattributes5_total[5m]))&g5.tab=0&g5.range_input=1h&g6.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_resourceattributes10_total[5m]))&g6.tab=0&g6.range_input=1h)
+
 
 #### What to look for
 
-- Spans with many attributes (bloated instrumentation, >20 attributes per span)
+- Telemetry with many (resource) attributes / metric high cardinality
 - Spans with dropped attributes (instrumentation adding too many attributes, hitting SDK limits)
 - Services producing large log bodies (stack traces, serialized objects, debug dumps)
-- Compare flagged item rate vs total item rate to get the percentage of problematic telemetry
