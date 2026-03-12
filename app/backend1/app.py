@@ -4,6 +4,7 @@ from time import sleep
 from random import randint
 from flask import Flask, Response, request
 from logging.config import dictConfig
+from opentelemetry import trace
 
 app = Flask(__name__)
 

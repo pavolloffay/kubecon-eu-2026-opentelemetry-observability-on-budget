@@ -119,6 +119,13 @@ connectors:
         attributes:
           - key: service.name
           - key: k8s.namespace.name
+      telemetry.spans.health:
+        description: "Spans from health endpoint"
+        conditions:
+          - attributes["http.route"] == "/health"
+        attributes:
+          - key: service.name
+          - key: k8s.namespace.name
     logs:
       telemetry.logs.body1000:
         description: "Log records with body larger than 1000 bytes"
@@ -169,7 +176,7 @@ connectors:
 ![Metric attributes](./images/p8s-profiling-metrics-resource-attributes.png)
 ![Debug logs](./images/p8s-profiling-debug-logs.png)
 
-- [All size profiling metrics](http://localhost:9090/graph?g0.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_attributes10_total[5m]))&g0.tab=0&g0.range_input=1h&g1.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_dropped_attributes_total[5m]))&g1.tab=0&g1.range_input=1h&g2.expr=sum%20by%20(service_name)%20(rate(telemetry_logs_body1000_total[5m]))&g2.tab=0&g2.range_input=1h&g3.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_attributes5_total[5m]))&g3.tab=0&g3.range_input=1h&g4.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_attributes10_total[5m]))&g4.tab=0&g4.range_input=1h&g5.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_resourceattributes5_total[5m]))&g5.tab=0&g5.range_input=1h&g6.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_resourceattributes10_total[5m]))&g6.tab=0&g6.range_input=1h&g7.expr=sum%20by%20(service_name)%20(rate(telemetry_logs_debug_total[5m]))&g7.tab=0&g7.range_input=1h)
+- [All size profiling metrics](http://localhost:9090/graph?g0.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_attributes10_total[5m]))&g0.tab=0&g0.range_input=1h&g1.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_dropped_attributes_total[5m]))&g1.tab=0&g1.range_input=1h&g2.expr=sum%20by%20(service_name)%20(rate(telemetry_logs_body1000_total[5m]))&g2.tab=0&g2.range_input=1h&g3.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_attributes5_total[5m]))&g3.tab=0&g3.range_input=1h&g4.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_attributes10_total[5m]))&g4.tab=0&g4.range_input=1h&g5.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_resourceattributes5_total[5m]))&g5.tab=0&g5.range_input=1h&g6.expr=sum%20by%20(service_name)%20(rate(telemetry_metrics_resourceattributes10_total[5m]))&g6.tab=0&g6.range_input=1h&g7.expr=sum%20by%20(service_name)%20(rate(telemetry_logs_debug_total[5m]))&g7.tab=0&g7.range_input=1h&g8.expr=sum%20by%20(service_name)%20(rate(telemetry_spans_health_total[5m]))&g8.tab=0&g8.range_input=1h)
 
 
 #### What to look for
@@ -205,6 +212,43 @@ processors:
     logs:
       log_record:
         - Len(body.string) > 5000
+```
+
+#### Drop health check spans
+
+Kubernetes probes generate spans every 15 seconds per service. Filter them out to reduce trace storage:
+
+```yaml
+processors:
+  filter/drop-health-spans:
+    error_mode: ignore
+    traces:
+      span:
+        - attributes["http.route"] == "/health"
+```
+
+If the trace for the `/health` endpoint contains more spans (e.g. internal). 
+It can be dropped with tail sampling or via rule based sampler.
+
+* Python `OTEL_PYTHON_EXCLUDED_URLS`
+* Java use [rule based routing sampler](https://github.com/open-telemetry/opentelemetry-java-contrib/tree/main/samplers#declarative-configuration). It requires declarative config which is not supported in the operator.
+* https://github.com/open-telemetry/opentelemetry-configuration/blob/main/schema-docs.md#experimentalcomposablerulebasedsamplerrule
+
+```yaml
+sampler:                                                                                                                                                                                                                                                                                                                                    
+    composable:                                                                                                                                                                                                                                                                                                                               
+      root:
+        rule_based:
+          span_kind: SERVER
+          rules:
+            - rule:
+                attribute:
+                  key: url.path
+                  value: /health
+                sampler:
+                  always_off: {}
+          fallback:
+            always_on: {}
 ```
 
 #### Drop logs from a specific service

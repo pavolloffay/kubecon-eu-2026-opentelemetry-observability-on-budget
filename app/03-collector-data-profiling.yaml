@@ -26,12 +26,24 @@ spec:
         logs:
           log_record:
             - severity_number < 9
+      filter/drop-health-spans:
+        error_mode: ignore
+        traces:
+          span:
+            - attributes["http.route"] == "/health"
 
     connectors:
       count:
         spans:
           telemetry.spans.count:
             description: "Span count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.health:
+            description: "Spans from health endpoint"
+            conditions:
+              - attributes["http.route"] == "/health"
             attributes:
               - key: service.name
               - key: k8s.namespace.name
@@ -133,7 +145,9 @@ spec:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [batch]
+          processors:
+#            - filter/drop-health-spans
+            - batch
           exporters: [otlp_grpc, debug, count]
         metrics:
           receivers: [otlp]

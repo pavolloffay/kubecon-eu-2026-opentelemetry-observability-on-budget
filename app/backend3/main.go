@@ -169,7 +169,8 @@ func main() {
 
 	})
 
-	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+	registerHandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		slog.DebugContext(r.Context(), "health check", "status", "ok")
 		w.Write([]byte("ok"))
 	})
 
