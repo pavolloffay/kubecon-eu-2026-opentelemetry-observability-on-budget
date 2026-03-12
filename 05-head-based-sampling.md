@@ -44,58 +44,35 @@ flowchart LR
 
 ## Configure the sampler in the SDK
 
+We are using the `Instrumentation` CR to manage the configuration for the SDKs in the cluster.
+Therefore we need to configure the sampling rate in the `Instrumentation` CR: `spec.sampler.argument: 0.2`.
+
+* Change the sampler argument to `0.5` in the [Instrumentation CR](./app/01-instrumentation.yaml)
+
 ## Jaeger remote sampling
 
 Jaeger remote sampling allows SDKs to dynamically fetch sampling strategies from the OpenTelemetry Collector, enabling centralized per-service sampling configuration without redeploying applications.
 
-### How it works
+* [Docs](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration)
 
+How it works:
 1. The collector serves sampling strategies via the [`jaegerremotesampling`](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/jaegerremotesampling) extension
 2. SDKs periodically poll the collector for their sampling configuration
 3. When the configuration changes, SDKs pick up new rates without restart
 
-### Collector configuration
+Benefits:
+- Centralized control - manage sampling rates for all services from one place
+- Per-service and endpoint rates - critical services get higher sampling, noisy services get lower
+- Dynamic updates - change rates without redeploying applications
+- SDK-level sampling - decisions are made before spans are created, saving application resources and network bandwidth
 
-```yaml
-extensions:
-  jaegerremotesampling:
-    source:
-      file: ./sampling-strategies.json
 
-service:
-  extensions: [jaegerremotesampling]
-```
+Change the [Instrumentation CR](./app/01-instrumentation.yaml) and [collector](./app/03-collector-data-profiling.yaml).
 
-### Sampling strategies file
-
-```json
-{
-  "default_strategy": {
-    "type": "probabilistic",
-    "param": 0.1
-  },
-  "service_strategies": [
-    {
-      "service": "payment-service",
-      "type": "probabilistic",
-      "param": 0.5
-    },
-    {
-      "service": "health-check",
-      "type": "probabilistic",
-      "param": 0.01
-    }
-  ]
-}
-```
-
-### Benefits
-
-- **Centralized control** - manage sampling rates for all services from one place
-- **Per-service rates** - critical services get higher sampling, noisy services get lower
-- **Dynamic updates** - change rates without redeploying applications
-- **SDK-level sampling** - decisions are made before spans are created, saving application resources and network bandwidth
-
-## Head sampling in the SDK
+How is it supported in the SDKs?
+- backend1 (Python) - not supported
+- backend2 (Java) - fully supported out of the box with the javaagent
+- backend3 (Go) - [supported](https://github.com/open-telemetry/opentelemetry-go-contrib/tree/main/samplers/jaegerremote), but requires manual SDK configuration (not via env var with operator injection)
+- frontend (Node.js) - not supported
 
 ## Head sampling in the collector
