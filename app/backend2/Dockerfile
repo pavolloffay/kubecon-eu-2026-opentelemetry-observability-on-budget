@@ -17,8 +17,4 @@ WORKDIR /usr/src/app
 
 COPY --from=builder /usr/src/app/build/libs/*.jar app.jar
 
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar javaagent.jar
-
-COPY run.sh .
-
-ENTRYPOINT ["./run.sh"]
+ENTRYPOINT ["java", "-jar", "./app.jar"]

@@ -57,6 +57,13 @@ spec:
             attributes:
               - key: service.name
               - key: k8s.namespace.name
+          telemetry.logs.debug:
+            description: "Debug log records"
+            conditions:
+              - severity_number < 9
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
         datapoints:
           telemetry.metrics.count:
             description: "Metric data point count per service"

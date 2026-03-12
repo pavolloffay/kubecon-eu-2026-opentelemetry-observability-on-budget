@@ -84,7 +84,9 @@ func main() {
 		os.Exit(1)
 	}
 	lp := sdklog.NewLoggerProvider(sdklog.WithProcessor(sdklog.NewBatchProcessor(logExporter)))
-	logger := slog.New(otelslog.NewHandler("backend3", otelslog.WithLoggerProvider(lp)))
+	otelHandler := otelslog.NewHandler("backend3", otelslog.WithLoggerProvider(lp))
+	stdoutHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
+	logger := slog.New(multiHandler{otelHandler, stdoutHandler})
 	slog.SetDefault(logger)
 
 	v, ok := os.LookupEnv("RATE_ERROR")
@@ -136,6 +138,29 @@ func main() {
 		}
 		resStr := strconv.Itoa(result)
 		slog.InfoContext(r.Context(), "dice rolled", "player", player, "result", result)
+		// TODO: remove before production - debug logging for troubleshooting dice bias issue
+		slog.DebugContext(r.Context(), "DEBUG dice roll diagnostics",
+			"player", player,
+			"result", result,
+			"max", max,
+			"request_headers", fmt.Sprintf("%v", r.Header),
+			"request_url", r.URL.String(),
+			"request_remote_addr", r.RemoteAddr,
+			"request_host", r.Host,
+			"request_method", r.Method,
+			"request_content_length", r.ContentLength,
+			"request_proto", r.Proto,
+			"request_user_agent", r.UserAgent(),
+			"request_referer", r.Referer(),
+			"request_cookies", fmt.Sprintf("%v", r.Cookies()),
+			"request_form", fmt.Sprintf("%v", r.Form),
+			"env_RATE_ERROR", os.Getenv("RATE_ERROR"),
+			"env_RATE_HIGH_DELAY", os.Getenv("RATE_HIGH_DELAY"),
+			"env_OTEL_EXPORTER_OTLP_ENDPOINT", os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"),
+			"env_OTEL_SERVICE_NAME", os.Getenv("OTEL_SERVICE_NAME"),
+			"env_OTEL_RESOURCE_ATTRIBUTES", os.Getenv("OTEL_RESOURCE_ATTRIBUTES"),
+			"stack_trace", fmt.Sprintf("goroutine 1 [running]:\nmain.rolldice()\n\t/app/main.go:115\nmain.main()\n\t/app/main.go:97\nruntime.main()\n\t/usr/local/go/src/runtime/proc.go:267\ngoroutine 2 [running]:\nmain.handler()\n\t/app/main.go:88\nnet/http.HandlerFunc.ServeHTTP()\n\t/usr/local/go/src/net/http/server.go:2136"),
+		)
 		rollCounter.Add(r.Context(), 1)
 		numbersCounter.Add(r.Context(), 1, otelmetric.WithAttributes(attribute.String("number", resStr)))
 		if _, err := w.Write([]byte(resStr)); err != nil {
@@ -185,4 +210,43 @@ func causeDelay(ctx context.Context, rate int) {
 
 func doRoll(_ context.Context, max int) int {
 	return rand.Intn(max) + 1
+}
+
+// multiHandler fans out log records to multiple slog handlers.
+type multiHandler []slog.Handler
+
+func (m multiHandler) Enabled(ctx context.Context, level slog.Level) bool {
+	for _, h := range m {
+		if h.Enabled(ctx, level) {
+			return true
+		}
+	}
+	return false
+}
+
+func (m multiHandler) Handle(ctx context.Context, r slog.Record) error {
+	for _, h := range m {
+		if h.Enabled(ctx, r.Level) {
+			if err := h.Handle(ctx, r); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (m multiHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	handlers := make(multiHandler, len(m))
+	for i, h := range m {
+		handlers[i] = h.WithAttrs(attrs)
+	}
+	return handlers
+}
+
+func (m multiHandler) WithGroup(name string) slog.Handler {
+	handlers := make(multiHandler, len(m))
+	for i, h := range m {
+		handlers[i] = h.WithGroup(name)
+	}
+	return handlers
 }
