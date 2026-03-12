@@ -2,9 +2,7 @@
 
 Telemetry data profiling allows you to understand how much telemetry is flowing through the system and what workloads are sending the most telemetry.
 
-## Understand which workloads and how much data they send
-
-### Collector internal metrics
+## Collector internal metrics
 
 The OpenTelemetry Collector exposes internal metrics that help understand how much telemetry data is flowing through the system.
 
@@ -30,13 +28,13 @@ The OpenTelemetry Collector exposes internal metrics that help understand how mu
 
 Full configuration is in [](./app/00-collector.yaml)
 
-### Profile telemetry data per workload
+## Profile telemetry
 
 The collector internal metrics above show overall throughput, but don't tell you **which workload** is responsible. To break down telemetry by service or namespace, use the **Count Connector** in the collector.
 
 The Count Connector counts spans, metric data points, and log records passing through the pipeline and produces new metrics grouped by resource attributes like `service.name` or `k8s.namespace.name`.
 
-#### Configure the Count Connector
+### Count traces, logs and metrics by service
 
 Add the following to the collector configuration:
 
@@ -97,7 +95,7 @@ The count connector acts as both an **exporter** (receives data from the traces/
 - Signal imbalance - a service producing many logs but few traces (or vice versa) may indicate misconfiguration
 - Growth over time - compare volumes over hours/days to detect trends
 
-### Profile by size of telemetry
+### Count "malicious" telemetry data
 
 The count connector supports **conditions** using OTTL expressions. This lets you count spans/logs that exceed size thresholds and flag noisy workloads.
 
@@ -179,3 +177,51 @@ connectors:
 - Telemetry with many (resource) attributes / metric high cardinality
 - Spans with dropped attributes (instrumentation adding too many attributes, hitting SDK limits)
 - Services producing large log bodies (stack traces, serialized objects, debug dumps)
+
+
+### Filter telemetry in the collector
+
+Once you've profiled your telemetry and identified noisy workloads, you can filter unwanted data in the collector using the **Filter Processor**.
+
+#### Drop debug logs
+
+The most common use case - drop debug/trace level logs that should not reach production backends:
+
+```yaml
+processors:
+  filter/drop-debug-logs:
+    error_mode: ignore
+    logs:
+      log_record:
+        - severity_number < 9
+```
+
+#### Drop logs with large bodies
+
+```yaml
+processors:
+  filter/drop-large-logs:
+    error_mode: ignore
+    logs:
+      log_record:
+        - Len(body.string) > 5000
+```
+
+#### Drop logs from a specific service
+
+```yaml
+processors:
+  filter/drop-noisy-service:
+    error_mode: ignore
+    logs:
+      log_record:
+        - resource.attributes["service.name"] == "noisy-service"
+```
+
+#### Best practices
+
+1. Fix at the source first - if a service emits debug logs in production, fix the application's log level. The collector filter is a safety net, not a permanent solution.
+2. Profile before filtering - use the count connector to understand what you're dropping and how much. Don't filter blindly.
+3. Filter early - place the filter processor as early as possible in the pipeline (before batch) to reduce memory and CPU usage.
+4. Use `error_mode: ignore` - prevents the filter processor from failing on records that don't match the condition type.
+5. Monitor what you drop - compare `otelcol_processor_filter_logs_filtered` with total logs to track how much is being filtered.

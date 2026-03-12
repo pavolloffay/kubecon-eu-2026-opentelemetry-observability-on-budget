@@ -21,6 +21,11 @@ spec:
 
     processors:
       batch: {}
+      filter/drop-debug-logs:
+        error_mode: ignore
+        logs:
+          log_record:
+            - severity_number < 9
 
     connectors:
       count:
@@ -140,5 +145,7 @@ spec:
           exporters: [otlp_grpc]
         logs:
           receivers: [otlp]
-          processors: [batch]
+          processors:
+            #            - filter/drop-debug-logs
+            - batch
           exporters: [otlp_grpc, debug/logs, count]
