@@ -74,6 +74,36 @@ kubectl get pods -n opentelemetry-operator-system -w
 
 ### Deploy observability backend
 
+```mermaid
+flowchart LR
+    subgraph "tutorial-application"
+        F[Frontend]
+        B1[Backend1]
+        B2[Backend2]
+        B3[Backend3]
+        AC[OTel Collector]
+    end
+
+    subgraph "observability-backend"
+        C[OTel Collector]
+        J[Jaeger]
+        P[Prometheus]
+    end
+
+    F -->|OTLP| AC
+    B1 -->|OTLP| AC
+    B2 -->|OTLP| AC
+    B3 -->|OTLP| AC
+    AC -->|OTLP| C
+    C -->|traces| J
+    C -->|metrics| P
+
+    style AC fill:#FFB74D
+    style C fill:#FFB74D
+    style J fill:#4CAF50
+    style P fill:#64B5F6
+```
+
 This course is all about Observabilty, so a backend is needed. If you don't have one, you can install Prometheus for metrics and Jaeger for traces as follows:
 
 ```bash
@@ -87,8 +117,13 @@ Afterwards, the backend can be found in the namespace `observability-backend`.
 kubectl port-forward -n observability-backend service/jaeger-query 16686:16686
 ```
 
-Open it in the browser [localhost:16686](http://localhost:16686/)
+Open Jaeger in the browser [localhost:16686](http://localhost:16686/)
 
+```bash
+kubectl port-forward -n observability-backend service/prometheus 9090:80
+```
+
+Open Prometheus in the browser [localhost:9090](http://localhost:9090/)
 
 ## Clone the repository
 

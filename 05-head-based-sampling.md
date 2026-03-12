@@ -42,6 +42,8 @@ flowchart LR
     style E2 fill:#64B5F6
 ```
 
+## Configure the sampler in the SDK
+
 ## Jaeger remote sampling
 
 Jaeger remote sampling allows SDKs to dynamically fetch sampling strategies from the OpenTelemetry Collector, enabling centralized per-service sampling configuration without redeploying applications.

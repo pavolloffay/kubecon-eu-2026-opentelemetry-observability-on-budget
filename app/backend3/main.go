@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -54,6 +55,10 @@ func main() {
 	}
 	tp := sdktrace.NewTracerProvider(sdktrace.WithBatcher(otelExporter))
 	otel.SetTracerProvider(tp)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
 
 	v, ok := os.LookupEnv("RATE_ERROR")
 	if !ok {
@@ -106,6 +111,10 @@ func main() {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
+	})
+
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
 	})
 
 	registerHandleFunc("GET /metrics", promhttp.Handler().ServeHTTP)

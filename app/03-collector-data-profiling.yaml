@@ -1,0 +1,114 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: tutorial-application
+spec:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.147.0
+  mode: deployment
+  ports:
+    - port: 8888
+      protocol: TCP
+      name: metrics
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch: {}
+
+    connectors:
+      count:
+        spans:
+          telemetry.spans.count:
+            description: "Span count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.attributes20:
+            description: "Spans with more than 20 attributes"
+            conditions:
+              - Len(attributes) > 20
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.dropped_attributes:
+            description: "Spans with dropped attributes"
+            conditions:
+              - dropped_attributes_count > 0
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+        logs:
+          telemetry.logs.count:
+            description: "Log count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.logs.body1000:
+            description: "Log records with body larger than 1000 bytes"
+            conditions:
+              - Len(body.string) > 1000
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+        datapoints:
+          telemetry.metrics.count:
+            description: "Metric data point count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.attributes20:
+            description: "Metric data points with more than 20 attributes"
+            conditions:
+              - Len(attributes) > 20
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+
+    exporters:
+      otlp_grpc:
+        endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+      debug:
+        verbosity: basic
+
+    service:
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+            - periodic:
+                exporter:
+                  otlp:
+                    protocol: grpc
+                    endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+                    insecure: true
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_grpc, debug, count]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_grpc, debug, count]
+        metrics/count:
+          receivers: [count]
+          processors: [batch]
+          exporters: [otlp_grpc]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_grpc, debug, count]

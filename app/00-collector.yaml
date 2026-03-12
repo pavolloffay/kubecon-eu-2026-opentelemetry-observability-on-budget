@@ -1,0 +1,60 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: tutorial-application
+spec:
+  mode: deployment
+  ports:
+    - port: 8888
+      protocol: TCP
+      name: metrics
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch: {}
+
+    exporters:
+      otlp_grpc:
+        endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+      debug:
+        verbosity: basic
+
+    service:
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+            - periodic:
+                exporter:
+                  otlp:
+                    protocol: grpc
+                    endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+                    insecure: true
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_grpc, debug]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_grpc, debug]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp_grpc, debug]

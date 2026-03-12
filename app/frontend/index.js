@@ -157,6 +157,10 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/health", (req, res) => {
+  res.status(200).send("ok");
+});
+
 app.listen(port, () => {
   pino.logger.info(`Example app listening on port ${port}`);
 });

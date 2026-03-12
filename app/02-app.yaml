@@ -23,6 +23,7 @@ spec:
         app: backend1
       annotations:
         prometheus.io/scrape: "true"
+        instrumentation.opentelemetry.io/inject-python: "true"
     spec:
       containers:
       - name: backend1
@@ -31,6 +32,17 @@ spec:
         ports:
         - containerPort: 5000
           name: service
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 1
 ---
 apiVersion: v1
 kind: Service
@@ -67,6 +79,7 @@ spec:
         app: backend2
       annotations:
         prometheus.io/scrape: "true"
+        instrumentation.opentelemetry.io/inject-java: "true"
     spec:
       containers:
       - name: backend2
@@ -74,6 +87,17 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5165
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5165
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5165
+          initialDelaySeconds: 5
 ---
 apiVersion: v1
 kind: Service
@@ -110,6 +134,7 @@ spec:
         app: backend3
       annotations:
         prometheus.io/scrape: "true"
+        instrumentation.opentelemetry.io/inject-sdk: "true"
     spec:
       containers:
       - name: backend3
@@ -117,6 +142,17 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5165
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5165
+          initialDelaySeconds: 5
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5165
+          initialDelaySeconds: 1
 ---
 apiVersion: v1
 kind: Service
@@ -153,14 +189,13 @@ spec:
         app: frontend
       annotations:
         prometheus.io/scrape: "true"
+        instrumentation.opentelemetry.io/inject-nodejs: "true"
     spec:
       containers:
       - name: frontend
         image: ghcr.io/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget-frontend:latest
         imagePullPolicy: IfNotPresent
         env:
-          - name: OTEL_INSTRUMENTATION_ENABLED
-            value: "true"
           - name: BACKEND1_URL
             value: "http://backend1-service:5000/rolldice"
           - name: BACKEND2_URL
@@ -169,6 +204,17 @@ spec:
             value: "http://backend3-service:5165/rolldice"
         ports:
         - containerPort: 4000
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 5
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 1
 ---
 apiVersion: v1
 kind: Service

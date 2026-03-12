@@ -32,6 +32,10 @@ def do_roll(max):
         sleep(0.1 * result)
     return result
 
+@app.route("/health")
+def health():
+    return "ok"
+
 @app.route("/metrics/")
 def metrics():
     return Response(generate_latest(), mimetype=str('text/plain; version=0.0.4; charset=utf-8'))

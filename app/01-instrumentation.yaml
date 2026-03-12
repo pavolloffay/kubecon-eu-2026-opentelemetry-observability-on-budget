@@ -5,7 +5,7 @@ metadata:
   namespace: tutorial-application
 spec:
   exporter:
-    endpoint: http://otel-collector.observability-backend.svc.cluster.local:4317
+    endpoint: http://otel-collector.tutorial-application.svc.cluster.local:4317
   propagators:
     - tracecontext
     - baggage
@@ -21,7 +21,14 @@ spec:
       # Python autoinstrumentation uses http/proto by default
       # so data must be sent to 4318 instead of 4317.
       - name: OTEL_EXPORTER_OTLP_ENDPOINT
-        value: http://otel-collector.observability-backend.svc.cluster.local:4318
+        value: http://otel-collector.tutorial-application.svc.cluster.local:4318
+  nodejs:
+    env:
+      # Required if endpoint is set to 4317.
+      # Node.js autoinstrumentation uses http/proto by default
+      # so data must be sent to 4318 instead of 4317.
+      - name: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: http://otel-collector.tutorial-application.svc.cluster.local:4318
   java:
     env:
       - name: OTEL_LOGS_EXPORTER

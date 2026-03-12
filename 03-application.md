@@ -47,7 +47,9 @@ sequenceDiagram
 Deploy the application into the kubernetes cluster. The app will be deployed into `tutorial-application` namespace.
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/k8s.yaml
+kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/00-collector.yaml
+kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/01-instrumentation.yaml
+kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/02-app.yaml
 ```
 ```bash
 kubectl get pods -n tutorial-application -w
@@ -58,6 +60,92 @@ backend2-deployment-59d4b47774-xbq84   1/1     Running   0          62s
 backend3-deployment-6b8f4d7c95-km3wp   1/1     Running   0          62s
 frontend-deployment-678795956d-zwg4q   1/1     Running   0          62s
 loadgen-deployment-5c7d6896f8-2fz6h    1/1     Running   0          62s
+```
+
+The frontend, backend1 and backed2 should have injected otel auto-instrumentation:
+```bash
+kbectl get pods -n tutorial-application  frontend-deployment-67fc9977ff-wv9bk -o yaml                                                                                                                                                        ploffay@fedora
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    instrumentation.opentelemetry.io/inject-nodejs: "true"
+  labels:
+    app: frontend
+    pod-template-hash: 67fc9977ff
+  name: frontend-deployment-67fc9977ff-wv9bk
+  namespace: tutorial-application
+spec:
+  containers:
+  - env:
+    - name: OTEL_NODE_IP
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: status.hostIP
+    - name: OTEL_POD_IP
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: status.podIP
+    - name: OTEL_INSTRUMENTATION_ENABLED
+      value: "true"
+    - name: BACKEND1_URL
+      value: http://backend1-service:5000/rolldice
+    - name: BACKEND2_URL
+      value: http://backend2-service:5165/rolldice
+    - name: BACKEND3_URL
+      value: http://backend3-service:5165/rolldice
+    - name: NODE_OPTIONS
+      value: ' --require /otel-auto-instrumentation-nodejs/autoinstrumentation.js'
+    - name: OTEL_SERVICE_NAME
+      value: frontend-deployment
+    - name: OTEL_EXPORTER_OTLP_ENDPOINT
+      value: http://otel-collector.tutorial-application.svc.cluster.local:4317
+    - name: OTEL_RESOURCE_ATTRIBUTES_POD_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.name
+    - name: OTEL_RESOURCE_ATTRIBUTES_POD_UID
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: metadata.uid
+    - name: OTEL_RESOURCE_ATTRIBUTES_NODE_NAME
+      valueFrom:
+        fieldRef:
+          apiVersion: v1
+          fieldPath: spec.nodeName
+    - name: OTEL_PROPAGATORS
+      value: tracecontext,baggage,b3
+    - name: OTEL_TRACES_SAMPLER
+      value: parentbased_traceidratio
+    - name: OTEL_TRACES_SAMPLER_ARG
+      value: "1"
+    - name: OTEL_RESOURCE_ATTRIBUTES
+      value: k8s.container.name=frontend,k8s.deployment.name=frontend-deployment,k8s.deployment.uid=61963d9f-0902-408c-ab17-070760e0df13,k8s.namespace.name=tutorial-application,k8s.node.name=$(OTEL_RESOURCE_ATTRIBUTES_NODE_NAME),k8s.pod.name=$(OTEL_RESOURCE_ATTRIBUTES_POD_NAME),k8s.pod.uid=$(OTEL_RESOURCE_ATTRIBUTES_POD_UID),k8s.replicaset.name=frontend-deployment-67fc9977ff,k8s.replicaset.uid=54e7e65e-4f36-46b5-a7bf-cd9a18b24054,service.instance.id=tutorial-application.$(OTEL_RESOURCE_ATTRIBUTES_POD_NAME).frontend,service.namespace=tutorial-application,service.version=latest
+    name: frontend
+    ports:
+    - containerPort: 4000
+      protocol: TCP
+    volumeMounts:
+    - mountPath: /otel-auto-instrumentation-nodejs
+      name: opentelemetry-auto-instrumentation-nodejs
+  initContainers:
+  - command:
+    - cp
+    - -r
+    - /autoinstrumentation/.
+    - /otel-auto-instrumentation-nodejs
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:0.71.0
+    imagePullPolicy: IfNotPresent
+    name: opentelemetry-auto-instrumentation-nodejs
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /otel-auto-instrumentation-nodejs
+      name: opentelemetry-auto-instrumentation-nodejs
 ```
 
 Now port-forward the frontend app:

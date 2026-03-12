@@ -20,6 +20,11 @@ public class RollController {
 	private static final Logger logger = LogManager.getLogger(RollController.class);
 
 
+	@GetMapping("/health")
+	public String health() {
+		return "ok";
+	}
+
 	@GetMapping("/rolldice")
 	public String index(@RequestParam("player") Optional<String> player) {
 		int result = this.getRandomNumber(-2, 6);
