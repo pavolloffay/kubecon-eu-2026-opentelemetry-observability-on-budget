@@ -76,27 +76,7 @@ tracer_provider:
         always_off:
 ```
 
-Other sampler options:
-
-```yaml
-# Always sample
-tracer_provider:
-  sampler:
-    always_on:
-
-# Always drop
-tracer_provider:
-  sampler:
-    always_off:
-
-# Simple ratio (without parent-based)
-tracer_provider:
-  sampler:
-    traceidratio:
-      sampling_ratio: 0.1
-```
-
-Currently Java is the primary SDK with full declarative configuration support.
+Currently Java is the primary SDK with full declarative configuration support. Support in SDKs is documented in [language-support](https://github.com/open-telemetry/opentelemetry-configuration/blob/main/language-support-status.md).
 
 ### Instrumentation CR
 
