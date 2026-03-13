@@ -89,7 +89,7 @@ spec:
     argument: "1"
 ```
 
-## Configure sampler in our demo app
+## Exercise: Change sampling rate in our demo app
 
 We are using the `Instrumentation` CR to manage the configuration for the SDKs in the cluster.
 Therefore we need to configure the sampling rate in the `Instrumentation` CR: `spec.sampler.argument: 0.2`.
@@ -100,8 +100,6 @@ Therefore we need to configure the sampling rate in the `Instrumentation` CR: `s
 
 Jaeger remote sampling allows SDKs to dynamically fetch sampling strategies from the OpenTelemetry Collector, enabling centralized per-service sampling configuration without redeploying applications.
 
-* [Docs](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration)
-
 How it works:
 1. The collector serves sampling strategies via the [`jaegerremotesampling`](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/extension/jaegerremotesampling) extension
 2. SDKs periodically poll the collector for their sampling configuration
@@ -111,9 +109,8 @@ Benefits:
 - Centralized control - manage sampling rates for all services from one place
 - Per-service and endpoint rates - critical services get higher sampling, noisy services get lower
 - Dynamic updates - change rates without redeploying applications
-- SDK-level sampling - decisions are made before spans are created, saving application resources and network bandwidth
 
-
+### Exercise - Enable Jaeger remote sampling
 Change the [Instrumentation CR](./app/01-instrumentation.yaml) and [collector](./app/03-collector-data-profiling.yaml).
 
 How is it supported in the SDKs?
