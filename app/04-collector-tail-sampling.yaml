@@ -1,0 +1,211 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: tutorial-application
+spec:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.147.0
+  mode: deployment
+  ports:
+    - port: 8888
+      protocol: TCP
+      name: metrics
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch: {}
+      tail_sampling:
+        decision_wait: 10s
+        num_traces: 50000
+        policies:
+          # Always keep error traces
+          - name: keep-errors
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          # Always keep slow traces (>2s)
+          - name: keep-slow
+            type: latency
+            latency:
+              threshold_ms: 2000
+          # Drop health check traces
+          - name: drop-health
+            type: drop
+            drop:
+              sub_policy:
+                - name: health-match
+                  type: string_attribute
+                  string_attribute:
+                    key: http.route
+                    values: ["/health"]
+          # Sample 10% of remaining traces
+          - name: sample-rest
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 10
+      filter/drop-debug-logs:
+        error_mode: ignore
+        logs:
+          log_record:
+            - severity_number < 9
+
+    connectors:
+      count:
+        spans:
+          telemetry.spans.count:
+            description: "Span count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.health:
+            description: "Spans from health endpoint"
+            conditions:
+              - attributes["http.route"] == "/health"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.attributes10:
+            description: "Spans with more than 10 attributes"
+            conditions:
+              - Len(attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.dropped_attributes:
+            description: "Spans with dropped attributes"
+            conditions:
+              - dropped_attributes_count > 0
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+        logs:
+          telemetry.logs.count:
+            description: "Log count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.logs.attributes10:
+            description: "logs with more than 10 attributes"
+            conditions:
+              - Len(attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.logs.body1000:
+            description: "Log records with body larger than 1000 bytes"
+            conditions:
+              - Len(body.string) > 1000
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.logs.debug:
+            description: "Debug log records"
+            conditions:
+              - severity_number < 9
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+        datapoints:
+          telemetry.metrics.count:
+            description: "Metric data point count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.attributes5:
+            description: "metric data points with more than 5 attributes"
+            conditions:
+              - Len(attributes) > 5
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.attributes10:
+            description: "metric data points with more than 10 attributes"
+            conditions:
+              - Len(attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.resourceattributes5:
+            description: "metric data points with more than 5 resource attributes"
+            conditions:
+              - Len(resource.attributes) > 5
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.resourceattributes10:
+            description: "metric data points with more than 10 resource attributes"
+            conditions:
+              - Len(resource.attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+
+    exporters:
+      otlp_grpc:
+        endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+      debug:
+        verbosity: basic
+      debug/logs:
+        verbosity: basic
+
+    service:
+      telemetry:
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+            - periodic:
+                exporter:
+                  otlp:
+                    protocol: grpc
+                    endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+                    insecure: true
+      pipelines:
+        traces:
+          receivers:
+           - otlp
+          processors:
+            - tail_sampling
+            - batch
+          exporters:
+           - otlp_grpc
+           - debug
+           - count
+        metrics:
+          receivers:
+           - otlp
+          processors:
+           - batch
+          exporters:
+            - otlp_grpc
+            - debug
+            - count
+        metrics/count:
+          receivers:
+            - count
+          processors:
+            - batch
+          exporters:
+            - otlp_grpc
+        logs:
+          receivers:
+            - otlp
+          processors:
+            - batch
+          exporters:
+            - otlp_grpc
+            - debug/logs
+            - count
