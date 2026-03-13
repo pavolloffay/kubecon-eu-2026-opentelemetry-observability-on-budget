@@ -184,6 +184,8 @@ probabilistic_sampler:
     sampling_percentage: 50
 ```
 
+![Spans per service](./images/p8s-collector-probabilistic-sampler.png)
+
 ### When to use it
 
 - You can't modify the application or SDK configuration (third-party services, legacy apps)
