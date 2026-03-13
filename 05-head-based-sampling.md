@@ -42,7 +42,74 @@ flowchart LR
     style E2 fill:#64B5F6
 ```
 
-## Configure the sampler in the SDK
+## Head based sampling configuration
+
+### Env variables
+
+```bash
+OTEL_TRACES_SAMPLER="parentbased_traceidratio" # or always_on, always_off, traceidratio, parentbased_always_on, parentbased_always_off, , parentbased_jaeger_remote, jaeger_remote
+OTEL_TRACES_SAMPLER_ARG="0.2" # or for jaeger_remote|parentbased_jaeger_remote: KV of endpoint, pollingIntervalMs, initialSamplingRate
+```
+
+### SDK
+
+```go
+provider := trace.NewTracerProvider(
+    trace.WithSampler(trace.AlwaysSample()),
+)
+```
+
+### Declarative configuration
+
+The [declarative configuration](https://opentelemetry.io/docs/languages/sdk-configuration/declarative-configuration/) (experimental) allows configuring samplers via YAML files:
+
+```yaml
+tracer_provider:
+  sampler:
+    parentbased:
+      root:
+        traceidratio:
+          sampling_ratio: 0.25
+      remote_parent_sampled:
+        always_on:
+      remote_parent_not_sampled:
+        always_off:
+```
+
+Other sampler options:
+
+```yaml
+# Always sample
+tracer_provider:
+  sampler:
+    always_on:
+
+# Always drop
+tracer_provider:
+  sampler:
+    always_off:
+
+# Simple ratio (without parent-based)
+tracer_provider:
+  sampler:
+    traceidratio:
+      sampling_ratio: 0.1
+```
+
+Currently Java is the primary SDK with full declarative configuration support.
+
+### Instrumentation CR
+
+```yaml
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+spec:
+  sampler:
+    type: parentbased_traceidratio
+    argument: "1"
+```
+
+## Configure sampler in our demo app
 
 We are using the `Instrumentation` CR to manage the configuration for the SDKs in the cluster.
 Therefore we need to configure the sampling rate in the `Instrumentation` CR: `spec.sampler.argument: 0.2`.
@@ -76,3 +143,83 @@ How is it supported in the SDKs?
 - frontend (Node.js) - not supported
 
 ## Head sampling in the collector
+
+Head sampling can also be done in the collector using the [**probabilistic sampler processor**](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/probabilisticsamplerprocessor). Unlike SDK sampling, the collector samples after spans are already created and exported by the application. It supports both **traces** and **logs**.
+
+### Three sampling modes
+
+#### 1. Hash Seed (default)
+
+Uses the FNV hash function on the Trace ID (or a specified attribute for logs) and compares against the sampling percentage. Uses 14 bits of randomness.
+
+```yaml
+processors:
+  probabilistic_sampler:
+    mode: hash_seed
+    sampling_percentage: 15
+    hash_seed: 42  # must be the same across all collectors in the same tier
+```
+
+- **Traces**: hashes the Trace ID
+- **Logs**: can hash any attribute (useful when logs don't have a Trace ID)
+- Best for: simple percentage-based sampling, especially for logs
+
+#### 2. Proportional
+
+Reduces items by a fixed ratio regardless of prior sampling decisions. Uses 56 bits of randomness per W3C spec.
+
+```yaml
+processors:
+  probabilistic_sampler:
+    mode: proportional
+    sampling_percentage: 25
+```
+
+#### 3. Equalizing
+
+Same 56-bit randomness as proportional, but considers **existing sampling** from upstream. Ensures all items reach a minimum sampling probability. Items already sampled at a lower rate pass through; items sampled at a higher rate are further reduced.
+
+```yaml
+processors:
+  probabilistic_sampler:
+    mode: equalizing
+    sampling_percentage: 10
+```
+
+- **Traces**: considers the upstream SDK sampling rate
+- **Logs**: considers prior sampling decisions
+- Best for: ensuring a uniform sampling rate across services with different SDK configurations
+
+### Comparison
+
+| Mode | Considers prior sampling? | Use case |
+|------|--------------------------|----------|
+| **hash_seed** | No | Simple sampling, logs without Trace ID |
+| **proportional** | No | Reduce volume by a fixed ratio |
+| **equalizing** | Yes | Normalize different upstream sampling rates |
+
+### Sampling priority
+
+The processor supports a priority attribute that overrides the sampling decision:
+
+**Traces** - uses the fixed attribute `sampling.priority`:
+- Value `0` → always drop
+- Non-zero → always keep
+
+**Logs** - uses a configurable attribute:
+```yaml
+processors:
+  probabilistic_sampler:
+    sampling_percentage: 15
+    sampling_priority: my_priority_field  # attribute name on the log record
+```
+- Value `0` → always drop
+- Value `>= 100` → always keep
+- Other values → treated as a percentage
+
+
+### When to use it
+
+- You can't modify the application or SDK configuration (third-party services, legacy apps)
+- You want centralized sampling control without touching each service's config
+- As a safety net to enforce maximum ingestion rate even if SDKs are misconfigured

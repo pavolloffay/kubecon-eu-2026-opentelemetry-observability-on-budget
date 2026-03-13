@@ -13,7 +13,7 @@ spec:
   sampler:
     type: parentbased_traceidratio
     argument: "1"
-#    type: jaeger_remote
+#    type: parentbased_jaeger_remote
 #    argument: "endpoint=http://otel-collector.tutorial-application.svc.cluster.local:5778/sampling"
   resource:
     addK8sUIDAttributes: true

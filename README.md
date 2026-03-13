@@ -21,7 +21,7 @@ Each tutorial step is located in a separate file:
 1. [Demo application](03-application.md) (5 min)
 1. [Data profiling](04-telemetry-data-profiling.md) (10 min)
 1. [Head based sampling](05-head-based-sampling.md) (10 minutes)
-1. [Tail based sampling]() (20 minutes)
+1. [Tail based sampling](06-tail-based-sampling.md) (20 minutes)
 1. [Cleaning logs]() (10 minutes)
 1. Wrap up & Questions
 
