@@ -125,10 +125,12 @@ Policies are evaluated in order. The decision logic:
 ## Exercise: use tail sampling in the demo app
 
 Requirements:
-* Drop /health traces
+* Drop `/health` traces
 * Keep error traces
 * Keep slow traces (>2s)
 * Sample 20% of remaining traces
+
+Apply [collector config](app/04-collector-tail-sampling.yaml).
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/refs/heads/main/app/01-instrumentation.yaml
@@ -136,9 +138,9 @@ kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-o
 make restart
 ```
 
-
 ![Global dropped/sampled](./images/p8s-tail-sampling-global.png)
 ![Sampled/no-sampled/dropped](./images/p8s-tail-sampling-sampled-dropped.png)
+![Collector memory](./images/p8s-tails-sampling-memory.png)
 
 ### Monitor tail sampling
 
