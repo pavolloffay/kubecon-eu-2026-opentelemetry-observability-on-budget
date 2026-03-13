@@ -34,6 +34,15 @@ metadata:
 spec:
   image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.147.0
   mode: deployment
+  env:
+    - name: OTEL_K8S_POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: OTEL_K8S_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
   volumes:
     - name: jaeger-sampling-strategies
       configMap:
@@ -184,7 +193,11 @@ spec:
     service:
 #      extensions: [jaegerremotesampling]
       telemetry:
+        resource:
+          k8s.pod.name: ${env:OTEL_K8S_POD_NAME}
+          k8s.namespace.name: ${env:OTEL_K8S_NAMESPACE}
         metrics:
+          level: detailed
           readers:
             - pull:
                 exporter:

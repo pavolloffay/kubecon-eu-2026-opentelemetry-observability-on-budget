@@ -111,16 +111,16 @@ processors:
 ### Policy evaluation
 
 Policies are evaluated in order. The decision logic:
-- If **any** policy decides to **sample** → trace is kept
+- If any policy decides to sample → trace is kept
 - The `drop` policy explicitly drops matching traces before other policies can keep them
 - `composite` policy allows allocating a sampling budget (e.g., 30% for errors, 20% for slow, 50% for the rest)
 
 ### Trade-offs
 
-- **Memory**: all traces are buffered for `decision_wait` duration. High-traffic systems need significant memory.
-- **Latency**: traces are delayed by `decision_wait` before reaching the backend
-- **Single point**: all spans must go through the same collector instance (or use load balancing with trace ID affinity)
-- **Late spans**: spans arriving after `decision_wait` may be dropped even if the trace was kept (use `decision_cache` to mitigate)
+- Memory: all traces are buffered for `decision_wait` duration. High-traffic systems need significant memory.
+- Latency: traces are delayed by `decision_wait` before reaching the backend
+- Single point: all spans must go through the same collector instance (or use load balancing with trace ID affinity)
+- Late spans: spans arriving after `decision_wait` may be dropped even if the trace was kept (use `decision_cache` to mitigate)
 
 ## Exercise: use tail sampling in the demo app
 
@@ -135,6 +135,10 @@ kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-o
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/refs/heads/main/app/04-collector-tail-sampling.yaml
 make restart
 ```
+
+
+![Global dropped/sampled](./images/p8s-tail-sampling-global.png)
+![Sampled/no-sampled/dropped](./images/p8s-tail-sampling-sampled-dropped.png)
 
 ### Monitor tail sampling
 
@@ -152,7 +156,7 @@ Policy performance:
 - [Policy execution count per policy](http://localhost:9090/graph?g0.expr=sum%20by%20(policy)%20(rate(otelcol_processor_tail_sampling_sampling_policy_execution_count_total[5m]))&g0.tab=0&g0.range_input=1h)
 - [Policy execution time per policy](http://localhost:9090/graph?g0.expr=sum%20by%20(policy)%20(rate(otelcol_processor_tail_sampling_sampling_policy_execution_time_sum__s_total[5m]))&g0.tab=0&g0.range_input=1h)
 
-[Collector memory usage](http://localhost:9090/graph?g0.expr=otelcol_process_memory_rss_bytes&g0.tab=0&g0.range_input=1h&g1.expr=otelcol_process_runtime_heap_alloc_bytes&g1.tab=0&g1.range_input=1h
-
+Collector memory usage:
+* [Collector memory usage](http://localhost:9090/graph?g0.expr=otelcol_process_memory_rss_bytes&g0.tab=0&g0.range_input=1h&g1.expr=otelcol_process_runtime_heap_alloc_bytes&g1.tab=0&g1.range_input=1h)
 * `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` - count of traces that needed to be dropped before the configured wait time (`decision_wait`). 
 
