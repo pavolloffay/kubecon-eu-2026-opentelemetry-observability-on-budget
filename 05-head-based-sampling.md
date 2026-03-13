@@ -89,10 +89,10 @@ spec:
     argument: "1"
 ```
 
-## Exercise: Change sampling rate in our demo app
+## Exercise: Change sampling rate to 50%
 
 We are using the `Instrumentation` CR to manage the configuration for the SDKs in the cluster.
-Therefore we need to configure the sampling rate in the `Instrumentation` CR: `spec.sampler.argument: 0.2`.
+Therefore we need to configure the sampling rate in the `Instrumentation` CR: `spec.sampler.argument: 0.5`.
 
 * Change the sampler argument to `0.5` in the [Instrumentation CR](./app/01-instrumentation.yaml)
 
