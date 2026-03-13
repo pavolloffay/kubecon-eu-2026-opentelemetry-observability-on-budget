@@ -39,7 +39,7 @@ spec:
           - name: drop-health
             type: drop
             drop:
-              sub_policy:
+              drop_sub_policy:
                 - name: health-match
                   type: string_attribute
                   string_attribute:
@@ -49,12 +49,7 @@ spec:
           - name: sample-rest
             type: probabilistic
             probabilistic:
-              sampling_percentage: 10
-      filter/drop-debug-logs:
-        error_mode: ignore
-        logs:
-          log_record:
-            - severity_number < 9
+              sampling_percentage: 20
 
     connectors:
       count:
@@ -161,6 +156,7 @@ spec:
     service:
       telemetry:
         metrics:
+          level: detailed
           readers:
             - pull:
                 exporter:
