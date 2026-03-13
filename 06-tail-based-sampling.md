@@ -256,11 +256,52 @@ Where `number_of_spans` comes from `otelcol_exporter_sent_spans_total{exporter="
 
 Remove the file exporter after measuring.
 
-#### Configuration knobs
+## Scalable tail sampling processor
 
-| Setting | Effect on memory |
-|---------|-----------------|
-| `decision_wait` | Lower = less memory, but risk missing late spans |
-| `num_traces` | Hard cap on buffered traces. When exceeded, oldest traces are dropped (`sampling_trace_dropped_too_early`) |
-| `expected_new_traces_per_sec` | Pre-allocates memory, reduces GC pressure |
-| `decision_cache.sampled_cache_size` | Lightweight cache for late spans after trace eviction |
+The tail sampling processor requires all spans from a trace to arrive at the same collector instance. With multiple collector replicas, you need a load balancing layer that routes spans by trace ID.
+
+```mermaid
+flowchart LR
+    subgraph "Services"
+        S1[Service A]
+        S2[Service B]
+        S3[Service C]
+    end
+
+    subgraph "Load Balancing Layer"
+        LB1[Collector<br/>loadbalancing exporter]
+        LB2[Collector<br/>loadbalancing exporter]
+    end
+
+    subgraph "Tail Sampling Layer"
+        TS1[Collector<br/>tail_sampling]
+        TS2[Collector<br/>tail_sampling]
+        TS3[Collector<br/>tail_sampling]
+    end
+
+    S1 -->|spans| LB1
+    S2 -->|spans| LB1
+    S3 -->|spans| LB2
+
+    LB1 -->|"trace ID hash % 3 = 0"| TS1
+    LB1 -->|"trace ID hash % 3 = 1"| TS2
+    LB1 -->|"trace ID hash % 3 = 2"| TS3
+    LB2 -->|"trace ID hash % 3 = 0"| TS1
+    LB2 -->|"trace ID hash % 3 = 1"| TS2
+    LB2 -->|"trace ID hash % 3 = 2"| TS3
+
+    TS1 --> Backend[Tracing Backend]
+    TS2 --> Backend
+    TS3 --> Backend
+
+    style LB1 fill:#FFB74D
+    style LB2 fill:#FFB74D
+    style TS1 fill:#4CAF50
+    style TS2 fill:#4CAF50
+    style TS3 fill:#4CAF50
+```
+
+See [collector configuration](./app/05-collector-scallable-tail-sampling.yaml)
+
+The [load balancing exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/loadbalancingexporter) hashes trace IDs and routes all spans from the same trace to the same backend collector. This ensures complete traces for tail sampling decisions.
+

@@ -1,0 +1,320 @@
+# Load balancing collector - routes spans by trace ID to tail sampling collectors
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: tutorial-application
+spec:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.147.0
+  mode: deployment
+  replicas: 1
+  env:
+    - name: OTEL_K8S_POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: OTEL_K8S_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+  ports:
+    - port: 8888
+      protocol: TCP
+      name: metrics
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+    processors:
+      batch: {}
+
+    connectors:
+      count:
+        spans:
+          telemetry.spans.count:
+            description: "Span count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.health:
+            description: "Spans from health endpoint"
+            conditions:
+              - attributes["http.route"] == "/health"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.attributes10:
+            description: "Spans with more than 10 attributes"
+            conditions:
+              - Len(attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.spans.dropped_attributes:
+            description: "Spans with dropped attributes"
+            conditions:
+              - dropped_attributes_count > 0
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+        logs:
+          telemetry.logs.count:
+            description: "Log count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.logs.attributes10:
+            description: "logs with more than 10 attributes"
+            conditions:
+              - Len(attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.logs.body1000:
+            description: "Log records with body larger than 1000 bytes"
+            conditions:
+              - Len(body.string) > 1000
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.logs.debug:
+            description: "Debug log records"
+            conditions:
+              - severity_number < 9
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+        datapoints:
+          telemetry.metrics.count:
+            description: "Metric data point count per service"
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.attributes5:
+            description: "metric data points with more than 5 attributes"
+            conditions:
+              - Len(attributes) > 5
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.attributes10:
+            description: "metric data points with more than 10 attributes"
+            conditions:
+              - Len(attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.resourceattributes5:
+            description: "metric data points with more than 5 resource attributes"
+            conditions:
+              - Len(resource.attributes) > 5
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+          telemetry.metrics.resourceattributes10:
+            description: "metric data points with more than 10 resource attributes"
+            conditions:
+              - Len(resource.attributes) > 10
+            attributes:
+              - key: service.name
+              - key: k8s.namespace.name
+
+    exporters:
+      # Load balancing exporter routes traces by trace ID
+      loadbalancing:
+        routing_key: traceID
+        protocol:
+          otlp:
+            tls:
+              insecure: true
+        resolver:
+          dns:
+            hostname: otel-tail-collector-headless.tutorial-application.svc.cluster.local
+            port: "4317"
+
+      otlp_grpc:
+        endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+      debug:
+        verbosity: basic
+
+    service:
+      telemetry:
+        resource:
+          k8s.pod.name: ${env:OTEL_K8S_POD_NAME}
+          k8s.namespace.name: ${env:OTEL_K8S_NAMESPACE}
+        metrics:
+          level: detailed
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+            - periodic:
+                exporter:
+                  otlp:
+                    protocol: grpc
+                    endpoint: otel-collector.observability-backend.svc.cluster.local:4320
+                    insecure: true
+      pipelines:
+        # Traces go to load balancer -> tail sampling collectors
+        traces:
+          receivers:
+            - otlp
+          processors:
+            - batch
+          exporters:
+            - loadbalancing
+            - count
+        metrics:
+          receivers:
+            - otlp
+          processors:
+            - batch
+          exporters:
+            - otlp_grpc
+            - debug
+            - count
+        metrics/count:
+          receivers:
+            - count
+          processors:
+            - batch
+          exporters:
+            - otlp_grpc
+        logs:
+          receivers:
+            - otlp
+          processors:
+            - batch
+          exporters:
+            - otlp_grpc
+            - debug
+            - count
+---
+# Tail sampling collectors - 3 replicas with trace ID affinity
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-tail
+  namespace: tutorial-application
+spec:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.147.0
+  mode: deployment
+  replicas: 3
+  env:
+    - name: OTEL_K8S_POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: OTEL_K8S_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+  ports:
+    - port: 8888
+      protocol: TCP
+      name: metrics
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+
+    processors:
+      batch: {}
+      tail_sampling:
+        decision_wait: 10s
+        num_traces: 50000
+        policies:
+          # Always keep error traces
+          - name: keep-errors
+            type: status_code
+            status_code:
+              status_codes: [ERROR]
+          # Always keep slow traces (>2s)
+          - name: keep-slow
+            type: latency
+            latency:
+              threshold_ms: 2000
+          # Drop health check traces
+          - name: drop-health
+            type: drop
+            drop:
+              drop_sub_policy:
+                - name: health-match
+                  type: string_attribute
+                  string_attribute:
+                    key: http.route
+                    values: ["/health"]
+          # Sample 20% of remaining traces
+          - name: sample-rest
+            type: probabilistic
+            probabilistic:
+              sampling_percentage: 20
+
+    exporters:
+      otlp_grpc:
+        endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+        tls:
+          insecure: true
+
+      debug:
+        verbosity: basic
+
+    service:
+      telemetry:
+        resource:
+          k8s.pod.name: ${env:OTEL_K8S_POD_NAME}
+          k8s.namespace.name: ${env:OTEL_K8S_NAMESPACE}
+        metrics:
+          level: detailed
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 0.0.0.0
+                    port: 8888
+            - periodic:
+                exporter:
+                  otlp:
+                    protocol: grpc
+                    endpoint: otel-collector.observability-backend.svc.cluster.local:4320
+                    insecure: true
+      pipelines:
+        traces:
+          receivers:
+            - otlp
+          processors:
+            - tail_sampling
+            - batch
+          exporters:
+            - otlp_grpc
+            - debug
+---
+# Headless service for DNS-based discovery of tail sampling collectors
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-tail-collector-headless
+  namespace: tutorial-application
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/component: opentelemetry-collector
+    app.kubernetes.io/instance: tutorial-application.otel-tail
+    app.kubernetes.io/managed-by: opentelemetry-operator
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
