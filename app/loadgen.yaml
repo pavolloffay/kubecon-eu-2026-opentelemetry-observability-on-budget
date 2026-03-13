@@ -27,10 +27,13 @@ spec:
         args:
           - |
             while true; do
-              PLAYERS=$(printf 'Pavol\nBenedikt\nYuri\nKristina\nSeverin' | shuf)
-              P1=$(echo "$PLAYERS" | sed -n '1p')
-              P2=$(echo "$PLAYERS" | sed -n '2p')
-              P3=$(echo "$PLAYERS" | sed -n '3p')
-              timeout 5 curl -s "${URL}?player1=${P1}&player2=${P2}&player3=${P3}" > /dev/null &
-              sleep 0.5
+              BATCH=$(( ($(od -An -tu4 -N4 /dev/urandom | tr -d ' ') % 5) + 1 ))
+              for i in $(seq 1 $BATCH); do
+                PLAYERS=$(printf 'Pavol\nBenedikt\nYuri\nKristina\nSeverin' | shuf)
+                P1=$(echo "$PLAYERS" | sed -n '1p')
+                P2=$(echo "$PLAYERS" | sed -n '2p')
+                P3=$(echo "$PLAYERS" | sed -n '3p')
+                timeout 5 curl -s "${URL}?player1=${P1}&player2=${P2}&player3=${P3}" > /dev/null &
+              done
+              sleep 1
             done

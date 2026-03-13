@@ -195,7 +195,7 @@ spec:
                 exporter:
                   otlp:
                     protocol: grpc
-                    endpoint: otel-collector.observability-backend.svc.cluster.local:4317
+                    endpoint: otel-collector.observability-backend.svc.cluster.local:4320
                     insecure: true
       pipelines:
         traces:
