@@ -65,6 +65,9 @@ spec:
 
     processors:
       batch: {}
+      probabilistic_sampler:
+        mode: equalizing
+        sampling_percentage: 50
       filter/drop-debug-logs:
         error_mode: ignore
         logs:
@@ -196,22 +199,40 @@ spec:
                     insecure: true
       pipelines:
         traces:
-          receivers: [otlp]
+          receivers:
+           - otlp
           processors:
 #            - filter/drop-health-spans
+#            - probabilistic_sampler
             - batch
-          exporters: [otlp_grpc, debug, count]
+          exporters:
+           - otlp_grpc
+           -  debug
+           -  count
         metrics:
-          receivers: [otlp]
-          processors: [batch]
-          exporters: [otlp_grpc, debug, count]
+          receivers:
+           - otlp
+          processors:
+           - batch
+          exporters:
+            - otlp_grpc
+            - debug
+            - count
         metrics/count:
-          receivers: [count]
-          processors: [batch]
-          exporters: [otlp_grpc]
+          receivers:
+            - count
+          processors:
+            - batch
+          exporters:
+            - otlp_grpc
         logs:
-          receivers: [otlp]
+          receivers:
+            - otlp
           processors:
             #            - filter/drop-debug-logs
+#            - probabilistic_sampler
             - batch
-          exporters: [otlp_grpc, debug/logs, count]
+          exporters:
+            - otlp_grpc
+            - debug/logs
+            - count

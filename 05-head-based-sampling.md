@@ -110,7 +110,7 @@ Benefits:
 - Per-service and endpoint rates - critical services get higher sampling, noisy services get lower
 - Dynamic updates - change rates without redeploying applications
 
-### Exercise - Enable Jaeger remote sampling
+### Exercise: Enable Jaeger remote sampling
 Change the [Instrumentation CR](./app/01-instrumentation.yaml) and [collector](./app/03-collector-data-profiling.yaml).
 
 How is it supported in the SDKs?
@@ -123,9 +123,9 @@ How is it supported in the SDKs?
 
 Head sampling can also be done in the collector using the [**probabilistic sampler processor**](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/probabilisticsamplerprocessor). Unlike SDK sampling, the collector samples after spans are already created and exported by the application. It supports both **traces** and **logs**.
 
-### Three sampling modes
+### Sampling modes
 
-#### 1. Hash Seed (default)
+#### Hash Seed (default)
 
 Uses the FNV hash function on the Trace ID (or a specified attribute for logs) and compares against the sampling percentage. Uses 14 bits of randomness.
 
@@ -141,7 +141,7 @@ processors:
 - **Logs**: can hash any attribute (useful when logs don't have a Trace ID)
 - Best for: simple percentage-based sampling, especially for logs
 
-#### 2. Proportional
+#### Proportional
 
 Reduces items by a fixed ratio regardless of prior sampling decisions. Uses 56 bits of randomness per W3C spec.
 
@@ -152,7 +152,7 @@ processors:
     sampling_percentage: 25
 ```
 
-#### 3. Equalizing
+#### Equalizing
 
 Same 56-bit randomness as proportional, but considers **existing sampling** from upstream. Ensures all items reach a minimum sampling probability. Items already sampled at a lower rate pass through; items sampled at a higher rate are further reduced.
 
@@ -175,25 +175,14 @@ processors:
 | **proportional** | No | Reduce volume by a fixed ratio |
 | **equalizing** | Yes | Normalize different upstream sampling rates |
 
-### Sampling priority
 
-The processor supports a priority attribute that overrides the sampling decision:
+### Exercise: Decrease traces and logs ingestion rate by 50%
 
-**Traces** - uses the fixed attribute `sampling.priority`:
-- Value `0` → always drop
-- Non-zero → always keep
-
-**Logs** - uses a configurable attribute:
 ```yaml
-processors:
-  probabilistic_sampler:
-    sampling_percentage: 15
-    sampling_priority: my_priority_field  # attribute name on the log record
+probabilistic_sampler:
+    mode: equalizing
+    sampling_percentage: 50
 ```
-- Value `0` → always drop
-- Value `>= 100` → always keep
-- Other values → treated as a percentage
-
 
 ### When to use it
 
