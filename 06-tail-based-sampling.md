@@ -158,5 +158,116 @@ Policy performance:
 
 Collector memory usage:
 * [Collector memory usage](http://localhost:9090/graph?g0.expr=otelcol_process_memory_rss_bytes&g0.tab=0&g0.range_input=1h&g1.expr=otelcol_process_runtime_heap_alloc_bytes&g1.tab=0&g1.range_input=1h)
-* `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` - count of traces that needed to be dropped before the configured wait time (`decision_wait`). 
+* `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` - count of traces that needed to be dropped before the configured wait time (`decision_wait`).
 
+### Sizing the collector memory for tail sampling
+
+The tail sampling processor buffers all traces in memory for `decision_wait` duration. Memory usage depends on:
+
+```
+traces_in_memory = incoming_traces_per_sec × decision_wait_seconds
+memory_needed = traces_in_memory × avg_spans_per_trace × avg_span_size_bytes
+```
+
+#### Estimate memory before deploying tail sampling
+
+Before enabling tail sampling, you can estimate the required memory using metrics from the collector that is already running without tail sampling.
+
+Step 1: Measure incoming span rate
+
+```promql
+sum(rate(otelcol_receiver_accepted_spans_total[5m]))
+```
+
+This tells you how many spans/sec the collector receives. Each of these will be buffered in memory during `decision_wait`.
+
+Step 2: Measure current collector memory
+
+```promql
+otelcol_process_memory_rss_bytes
+```
+
+This is the baseline memory without tail sampling. Tail sampling will add on top of this.
+
+Step 3: Calculate expected memory
+
+```
+spans_in_memory     = incoming_spans_per_sec × decision_wait_seconds
+avg_span_size       = measure with file exporter (see below)
+buffer_memory       = spans_in_memory × avg_span_size
+total_memory        = baseline_memory + buffer_memory × 2 (Go runtime overhead)
+```
+
+Example for our demo app (loadgen ~50 req/sec, ~15 spans per trace across 4 services):
+```
+Incoming spans:     ~750 spans/sec (from otelcol_receiver_accepted_spans_total)
+decision_wait:      10s
+Spans in memory:    750 × 10 = 7,500 spans
+Buffer memory:      7,500 × 2 KB = 15 MB
+Baseline memory:    ~215 MB (from otelcol_process_memory_rss_bytes)
+Total estimate:     215 MB + 15 MB × 2 ≈ 245 MB
+K8s memory limit:   ~370 MB (1.5x total for safety)
+```
+
+For a production system with higher traffic:
+```
+Incoming spans:     10,000 spans/sec
+decision_wait:      30s
+Spans in memory:    10,000 × 30 = 300,000 spans
+Buffer memory:      300,000 × 2 KB = 600 MB
+Baseline memory:    100 MB
+Total estimate:     100 MB + 600 MB × 2 = 1.3 GB
+K8s memory limit:   ~2 GB (1.5x total for safety)
+```
+
+**Step 4: Set `num_traces`**
+
+```
+num_traces = incoming_traces_per_sec × decision_wait_seconds × 1.5 (safety margin)
+```
+
+If `num_traces` is too low, traces are evicted before `decision_wait` expires and `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` increases.
+
+#### Measure average span size
+
+There is no collector metric that exposes span size in bytes. To measure it, temporarily add a `file` exporter with protobuf format to your collector:
+
+```yaml
+exporters:
+  file/sizing:
+    path: /tmp/spans.pb
+    format: proto
+
+service:
+  pipelines:
+    traces:
+      exporters: [..., file/sizing]
+```
+
+After collecting data for a few minutes, calculate:
+
+```
+avg_span_size = file_size_bytes / number_of_spans
+```
+
+Where `number_of_spans` comes from `otelcol_exporter_sent_spans_total{exporter="file/sizing"}`.
+
+Remove the file exporter after measuring.
+
+#### After deployment: verify with tail sampling metrics
+
+Once tail sampling is running, verify your estimates with:
+
+- `otelcol_processor_tail_sampling_sampling_traces_on_memory` — actual traces buffered
+- `otelcol_process_memory_rss_bytes` — actual memory used
+- `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` — 0 means `num_traces` is sufficient
+- `otelcol_process_runtime_heap_alloc_bytes / otelcol_processor_tail_sampling_sampling_traces_on_memory` — actual memory per trace
+
+#### Configuration knobs
+
+| Setting | Effect on memory |
+|---------|-----------------|
+| `decision_wait` | Lower = less memory, but risk missing late spans |
+| `num_traces` | Hard cap on buffered traces. When exceeded, oldest traces are dropped (`sampling_trace_dropped_too_early`) |
+| `expected_new_traces_per_sec` | Pre-allocates memory, reduces GC pressure |
+| `decision_cache.sampled_cache_size` | Lightweight cache for late spans after trace eviction |
