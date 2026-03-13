@@ -142,7 +142,7 @@ make restart
 ![Sampled/no-sampled/dropped](./images/p8s-tail-sampling-sampled-dropped.png)
 ![Collector memory](./images/p8s-tails-sampling-memory.png)
 
-### Monitor tail sampling
+## Monitor tail sampling
 
 The tail sampling processor exposes [internal metrics](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/tailsamplingprocessor/documentation.md) to monitor its behavior:
 
@@ -162,7 +162,7 @@ Collector memory usage:
 * [Collector memory usage](http://localhost:9090/graph?g0.expr=otelcol_process_memory_rss_bytes&g0.tab=0&g0.range_input=1h&g1.expr=otelcol_process_runtime_heap_alloc_bytes&g1.tab=0&g1.range_input=1h)
 * `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` - count of traces that needed to be dropped before the configured wait time (`decision_wait`).
 
-### Sizing the collector memory for tail sampling
+## Sizing the collector memory for tail sampling
 
 The tail sampling processor buffers all traces in memory for `decision_wait` duration. Memory usage depends on:
 
@@ -171,7 +171,7 @@ traces_in_memory = incoming_traces_per_sec × decision_wait_seconds
 memory_needed = traces_in_memory × avg_spans_per_trace × avg_span_size_bytes
 ```
 
-#### Estimate memory before deploying tail sampling
+### Estimate memory before deploying tail sampling
 
 Before enabling tail sampling, you can estimate the required memory using metrics from the collector that is already running without tail sampling.
 
@@ -230,7 +230,7 @@ num_traces = incoming_traces_per_sec × decision_wait_seconds × 1.5 (safety mar
 
 If `num_traces` is too low, traces are evicted before `decision_wait` expires and `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` increases.
 
-#### Measure average span size
+### Measure average span size
 
 There is no collector metric that exposes span size in bytes. To measure it, temporarily add a `file` exporter with protobuf format to your collector:
 
@@ -255,15 +255,6 @@ avg_span_size = file_size_bytes / number_of_spans
 Where `number_of_spans` comes from `otelcol_exporter_sent_spans_total{exporter="file/sizing"}`.
 
 Remove the file exporter after measuring.
-
-#### After deployment: verify with tail sampling metrics
-
-Once tail sampling is running, verify your estimates with:
-
-- `otelcol_processor_tail_sampling_sampling_traces_on_memory` — actual traces buffered
-- `otelcol_process_memory_rss_bytes` — actual memory used
-- `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` — 0 means `num_traces` is sufficient
-- `otelcol_process_runtime_heap_alloc_bytes / otelcol_processor_tail_sampling_sampling_traces_on_memory` — actual memory per trace
 
 #### Configuration knobs
 
