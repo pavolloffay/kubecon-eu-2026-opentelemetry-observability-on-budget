@@ -16,12 +16,12 @@ Internal meeting doc: https://docs.google.com/document/d/1rbc0JqMP7i4koKpxqb9gYo
 
 Each tutorial step is located in a separate file:
 
-1. [Welcome & Setup](01-welcome-setup.md) (5 min)
-1. [Sampling overview](02-sampling-overview.md) (10 min)
-1. [Demo application](03-application.md) (5 min)
-1. [Data profiling](04-telemetry-data-profiling.md) (10 min)
-1. [Head based sampling](05-head-based-sampling.md) (10 minutes)
-1. [Tail based sampling](06-tail-based-sampling.md) (20 minutes)
-1. [Cleaning logs]() (10 minutes)
+1. [Welcome & Setup](01-welcome-setup.md) (5 minutes)
+1. [Sampling overview](02-sampling-overview.md) (10 minutes)
+1. [Demo application](03-application.md) (5 minutes)
+1. [Data profiling](04-telemetry-data-profiling.md) (15 minutes)
+1. [Head based sampling](05-head-based-sampling.md) (15 minutes)
+1. [Tail based sampling](06-tail-based-sampling.md) (10 minutes)
+1. [Logs deduplication](07-logs-deduplication.md) (5 minutes)
 1. Wrap up & Questions
 
