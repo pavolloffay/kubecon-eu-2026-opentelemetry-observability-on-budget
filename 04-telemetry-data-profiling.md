@@ -232,7 +232,7 @@ Endpoints can be be excluded from tracing via SDK config e.g. `OTEL_PYTHON_EXCLU
 
 ### Exercise: add filtering to the collector in the tutorial-application namespace
 
-Add filtering to [03-collector-data-profiling.yaml](app/03-collector-data-profiling.yaml)
+Add filtering to [app/03-collector-data-profiling.yaml](app/03-collector-data-profiling.yaml)
 
 ```bash
 kubctl apply -f app/03-collector-data-profiling.yaml
