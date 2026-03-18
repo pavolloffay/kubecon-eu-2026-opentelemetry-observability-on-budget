@@ -77,11 +77,17 @@ spec:
       probabilistic_sampler:
         mode: equalizing
         sampling_percentage: 50
+
       filter/drop-debug-logs:
         error_mode: ignore
         logs:
           log_record:
             - severity_number < 9
+      filter/drop-large-logs:
+        error_mode: ignore
+        logs:
+          log_record:
+            - Len(body.string) > 1000
       filter/drop-health-spans:
         error_mode: ignore
         traces:
@@ -242,7 +248,8 @@ spec:
           receivers:
             - otlp
           processors:
-            #            - filter/drop-debug-logs
+#            - filter/drop-debug-logs
+#            - filter/drop-large-logs
 #            - probabilistic_sampler
             - batch
           exporters:

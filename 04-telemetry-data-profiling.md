@@ -212,7 +212,7 @@ processors:
     error_mode: ignore
     logs:
       log_record:
-        - Len(body.string) > 5000
+        - Len(body.string) > 1000
 ```
 
 #### Drop health check spans
@@ -228,10 +228,25 @@ processors:
         - attributes["http.route"] == "/health"
 ```
 
-If the trace for the `/health` endpoint contains more spans (e.g. internal). 
+Endpoints can be be excluded from tracing via SDK config e.g. `OTEL_PYTHON_EXCLUDED_URLS`. It is reliable only if trace has a single span.
+
+### Exercise: add filtering to the collector in the tutorial-application namespace
+
+Add filtering to [03-collector-data-profiling.yaml](app/03-collector-data-profiling.yaml)
+
+```bash
+kubctl apply -f app/03-collector-data-profiling.yaml
+```
+
+The health traces are not completely removed:
+* backend2 - http://localhost:16686/search?end=1773856692868000&limit=50&lookback=1h&maxDuration&minDuration&operation=RollController.health&service=backend2-deployment&start=1773853092868000
+* frontend - Search for all traces with large limit - e.g. 500 and search for `Incomplete`
+
+#### Better way of dropping health check spans
+
+If the trace for the `/health` endpoint contains more spans (e.g. internal).
 It can be dropped with tail sampling or via rule based sampler.
 
-* Python `OTEL_PYTHON_EXCLUDED_URLS`
 * Java use [rule based routing sampler](https://github.com/open-telemetry/opentelemetry-java-contrib/tree/main/samplers#declarative-configuration). It requires declarative config which is not supported in the operator.
 * https://github.com/open-telemetry/opentelemetry-configuration/blob/main/schema-docs.md#experimentalcomposablerulebasedsamplerrule
 
@@ -252,21 +267,9 @@ sampler:
             always_on: {}
 ```
 
-#### Drop logs from a specific service
-
-```yaml
-processors:
-  filter/drop-noisy-service:
-    error_mode: ignore
-    logs:
-      log_record:
-        - resource.attributes["service.name"] == "noisy-service"
-```
-
 #### Best practices
 
+1. Profile before filtering - use the count connector to understand what you're dropping and how much. Don't filter blindly.
 1. Fix at the source first - if a service emits debug logs in production, fix the application's log level. The collector filter is a safety net, not a permanent solution.
-2. Profile before filtering - use the count connector to understand what you're dropping and how much. Don't filter blindly.
-3. Filter early - place the filter processor as early as possible in the pipeline (before batch) to reduce memory and CPU usage.
-4. Use `error_mode: ignore` - prevents the filter processor from failing on records that don't match the condition type.
-5. Monitor what you drop - compare `otelcol_processor_filter_logs_filtered` with total logs to track how much is being filtered.
+1. Filter early - place the filter processor as early as possible in the pipeline (before batch) to reduce memory and CPU usage.
+1. Monitor what you drop - compare `otelcol_processor_filter_logs_filtered` with total logs to track how much is being filtered.
