@@ -170,3 +170,16 @@ kubectl port-forward service/frontend-service -n tutorial-application 4000:4000
 ```
 
 Open browser at [http://localhost:4000/](http://localhost:4000/).
+
+
+## Build
+
+The app can be built:
+
+```bash
+make docker-build
+# Load images to Kind cluster
+make kind-load 
+# Restart workloads
+make restart
+```
