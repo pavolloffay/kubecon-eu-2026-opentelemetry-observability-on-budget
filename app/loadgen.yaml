@@ -26,8 +26,8 @@ spec:
           - |
             while true; do
               #BATCH=$(( ($(od -An -tu4 -N4 /dev/urandom | tr -d ' ') % 5) + 1 )) # up to 5 req/s
-              #BATCH=$(( ($(od -An -tu4 -N4 /dev/urandom | tr -d ' ') % 41) + 10 )) # ~ 10-50 req/s
-              BATCH=50
+              BATCH=$(( ($(od -An -tu4 -N4 /dev/urandom | tr -d ' ') % 41) + 10 )) # ~ 10-50 req/s
+              #BATCH=50
               for i in $(seq 1 $BATCH); do
                 PLAYERS=$(printf 'Pavol\nBenedikt\nYuri\nKristina\nSeverin' | shuf)
                 P1=$(echo "$PLAYERS" | sed -n '1p')

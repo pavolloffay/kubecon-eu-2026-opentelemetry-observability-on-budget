@@ -19,7 +19,6 @@ jobs:
           - backend1
           - backend2
           - backend3
-          - loadgen
 
     steps:
       - name: Checkout repository
