@@ -46,16 +46,22 @@ sequenceDiagram
 
 Deploy the application into the kubernetes cluster. The app will be deployed into `tutorial-application` namespace.
 
+Instrumentation:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/01-instrumentation.yaml
 ```
+
+Collector:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/00-collector.yaml
 ```
+
+Loadgen:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/02-app.yaml
 ```
 
+App:
 ```bash
 kubectl get pods -n tutorial-application -w
 ...
