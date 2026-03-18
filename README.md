@@ -10,9 +10,10 @@ Previous tutorials:
 __Abstract__: Observability costs can quickly spiral out of control. This tutorial provides a holistic framework for managing these costs without sacrificing insight. We will systematically compare head-based, probabilistic, and tail-based sampling, explaining their trade-offs in cost, computational overhead, and data fidelity. We'll directly address the hidden costs of tail sampling—which can increase compute load—and clarify when to use it. Beyond sampling, you'll learn to profile telemetry to eliminate waste (duplicates, debug logs) and use smart routing to send data to cheaper backends. You will leave equipped to design a cost-effective observability strategy in Kubernetes using OpenTelemetry, choose the right sampling method for your workload, and gain clear visibility into your spending.
 __Sched__: - https://kccnceu2026.sched.com/event/2CW3t/tutorial-full-stack-observability-on-a-budget-a-guide-to-strategic-sampling-and-data-optimization-pavol-loffay-red-hat
 
-## Agenda
+![QR](./images/qr.png)
+Go to: [bit.ly/4rHZ1UR](https://bit.ly/4rHZ1UR)
 
-Internal meeting doc: https://docs.google.com/document/d/1rbc0JqMP7i4koKpxqb9gYovmAlJ_BRN1Ttg3EhY9cbY/edit
+## Agenda
 
 Each tutorial step is located in a separate file:
 

@@ -47,10 +47,15 @@ sequenceDiagram
 Deploy the application into the kubernetes cluster. The app will be deployed into `tutorial-application` namespace.
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/00-collector.yaml
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/01-instrumentation.yaml
+```
+```bash
+kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/00-collector.yaml
+```
+```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/02-app.yaml
 ```
+
 ```bash
 kubectl get pods -n tutorial-application -w
 ...
@@ -60,6 +65,10 @@ backend2-deployment-59d4b47774-xbq84   1/1     Running   0          62s
 backend3-deployment-6b8f4d7c95-km3wp   1/1     Running   0          62s
 frontend-deployment-678795956d-zwg4q   1/1     Running   0          62s
 loadgen-deployment-5c7d6896f8-2fz6h    1/1     Running   0          62s
+```
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/loadgen.yaml
 ```
 
 The frontend, backend1 and backed2 should have injected otel auto-instrumentation:

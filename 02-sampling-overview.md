@@ -8,7 +8,7 @@ Source: [OpenTelemetry Sampling](https://opentelemetry.io/docs/concepts/sampling
 
 Why sampling?:
 * Cost Management: Storing and processing 100% of traces is rarely cost-effective.
-* Overhead Reduction: Generating trace IDs and spans consumes CPU and memory on the application host.
+* Resource Reduction: Generating and sending all temenetry data consumer CPU, memory and network resources.
 * Noise Filtering: Most requests are "healthy" and repetitive; you often only need a representative slice to identify patterns.
 
 ## Head based sampling
@@ -50,7 +50,6 @@ flowchart LR
 **Pros:**
 - Simple to implement
 - Low resource overhead
-- Consistent traces (all or nothing)
 
 **Cons:**
 - Cannot make decisions based on trace outcome (errors, latency)
@@ -78,27 +77,39 @@ Head-based sampling is configured in the SDK. The main built-in options are:
 
 ProbabilitySampler follows the W3C standard, ensuring consistent sampling across all SDK implementations. It also propagates the sampling threshold in tracestate (`ot=th:...`).
 
-##### Threshold use-cases:
+##### Threshold
+
+The `ot=th:...` in tracestate is the sampling threshold defined by the W3C Trace Context probability sampling specification.
+
+```
+threshold = (1 - probability) × 2^56
+Example calculation for 10% sampling:                                                                                                                                                                                                                                                                                                       
+threshold = (1 - 0.1) × 2^56
+          = 0.9 × 72057594037927936                                                                                                                                                                                                                                                                                                          
+          = 64851834634135142                                                                                                                                                                                                                                                                                                                
+          = 0xe6666666666666 (hex) 
+
+The trace ID (128 bits / 16 bytes) has its last 7 bytes (56 bits) used as the random value:                                                                                                                                                                                                                                                 
+Trace ID:  [8 bytes timestamp/random] [7 bytes randomness]                                                                                                                                                                                                                                                                                  
+                                       ↑                                                                                                                                                                                                                                                                                                    
+                                 used for comparison                                   
+Comparison logic:                                                                                                                                                                                                                                                                                                                           
+randomness = traceId[9:16] as uint64  # last 7 bytes                                                                                                                                                                                                                                                                                        
+if randomness >= threshold:
+    sample = true                                                                                                                                                                                                                                                                                                                           
+else:                                                                                                                                                                                                                                                                                                                                       
+    sample = false   
+```
+
+##### Use-case example
 - Adjusted counts - backends multiply sampled spans by 1/probability to estimate actual traffic
 
-  Example with 10% sampling - threshold to probability conversion:
-  ```
-  Threshold value:    th:e6666666666666
-  Padded to 14 hex:   e6666666666666
-  As decimal:         64851834634135142
-  Max (2^56):         72057594037927936
-
-  Probability = (Max - Threshold) / Max
-              = (72057594037927936 - 64851834634135142) / 72057594037927936
-              ≈ 0.1 (10%)
-  ```
-
-  If you observe 500 sampled requests with 5 errors:
-  ```
-  Estimated actual requests = 500 × (1/0.1) = 5,000 requests
-  Estimated actual errors   = 5 × (1/0.1)   = 50 errors
-  Estimated error rate      = 50/5,000      = 1%
-  ```
+If you observe 500 sampled requests with 5 errors and 10% threshold:
+```
+Estimated actual requests = 500 × (1/0.1) = 5,000 requests
+Estimated actual errors   = 5 × (1/0.1)   = 50 errors
+Estimated error rate      = 50/5,000      = 1%
+```
 
 - Consistent root decisions - multiple entry point services with same threshold configuration make identical sampling decisions for the same trace ID
 - Rate limiting awareness - collectors can understand the upstream sampling rate when applying additional filtering
