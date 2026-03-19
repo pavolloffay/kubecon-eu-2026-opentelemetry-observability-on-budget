@@ -137,7 +137,31 @@ Head sampling can also be done in the collector using the [probabilistic sampler
 
 ### Sampling modes
 
-#### Hash Seed (default)
+#### Equalizing
+
+* Items already sampled at a lower rate pass through; items sampled at a higher rate are further reduced.
+
+```yaml
+processors:
+  probabilistic_sampler:
+    mode: equalizing
+    sampling_percentage: 10
+```
+
+- Best for: ensuring a uniform sampling rate across services with different SDK configurations
+
+#### Proportional
+
+* Reduces items by a fixed ratio regardless of prior sampling decisions.
+
+```yaml
+processors:
+  probabilistic_sampler:
+    mode: proportional
+    sampling_percentage: 25
+```
+
+#### Hash Seed
 
 Uses the FNV hash function on the Trace ID (or a specified attribute for logs) and compares against the sampling percentage. Uses 14 bits of randomness.
 
@@ -149,43 +173,20 @@ processors:
     hash_seed: 42  # must be the same across all collectors in the same tier
 ```
 
-- **Traces**: hashes the Trace ID
-- **Logs**: can hash any attribute (useful when logs don't have a Trace ID)
+- Traces: hashes the Trace ID
+- Logs: can hash any attribute (useful when logs don't have a Trace ID)
 - Best for: simple percentage-based sampling, especially for logs
 
-#### Proportional
-
-Reduces items by a fixed ratio regardless of prior sampling decisions. Uses 56 bits of randomness per W3C spec.
-
-```yaml
-processors:
-  probabilistic_sampler:
-    mode: proportional
-    sampling_percentage: 25
-```
-
-#### Equalizing
-
-Same 56-bit randomness as proportional, but considers **existing sampling** from upstream. Ensures all items reach a minimum sampling probability. Items already sampled at a lower rate pass through; items sampled at a higher rate are further reduced.
-
-```yaml
-processors:
-  probabilistic_sampler:
-    mode: equalizing
-    sampling_percentage: 10
-```
-
-- **Traces**: considers the upstream SDK sampling rate
-- **Logs**: considers prior sampling decisions
-- Best for: ensuring a uniform sampling rate across services with different SDK configurations
-
 ### Comparison
+Practical difference with 10%:
 
-| Mode | Considers prior sampling? | Use case |
-|------|--------------------------|----------|
-| **hash_seed** | No | Simple sampling, logs without Trace ID |
-| **proportional** | No | Reduce volume by a fixed ratio |
-| **equalizing** | Yes | Normalize different upstream sampling rates |
+Upstream SDK sampled at 50% → sends trace with th:8000...
+
+hash_seed:    Ignores th:, hashes TraceID → keeps 10% → effective 5%                                                                                                                                                                                                                                                                        
+proportional: Ignores th:, uses TraceID randomness → keeps 10% → effective 5%                                                                                                                                                                                                                                                               
+equalizing:   Reads th:, sees 50% > 10% target → reduces to 10% → effective 10%
+
+Key takeaway: hash_seed and proportional behave similarly (both ignore upstream), but hash_seed uses a different randomness source (hash vs raw TraceID bits) and doesn't propagate the threshold downstream.
 
 
 ### Exercise: Decrease traces and logs ingestion rate by 50%
