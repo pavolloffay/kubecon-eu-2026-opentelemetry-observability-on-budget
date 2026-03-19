@@ -120,7 +120,6 @@ Policies are evaluated in order. The decision logic:
 - Memory: all traces are buffered for `decision_wait` duration. High-traffic systems need significant memory.
 - Latency: traces are delayed by `decision_wait` before reaching the backend
 - Single point: all spans must go through the same collector instance (or use load balancing with trace ID affinity)
-- Late spans: spans arriving after `decision_wait` may be dropped even if the trace was kept (use `decision_cache` to mitigate)
 
 ## Exercise: use tail sampling in the demo app
 
@@ -130,7 +129,9 @@ Requirements:
 * Keep slow traces (>2s)
 * Sample 20% of remaining traces
 
-Apply [collector config](app/04-collector-tail-sampling.yaml).
+Before the change see that the `backend2` is still sending health traces in [Jaeger](http://localhost:16686/search?end=1773917156080000&limit=20&lookback=1h&maxDuration&minDuration&operation=RollController.health&service=backend2-deployment&start=1773913556080000)
+
+Apply [04-collector-tail-sampling.yaml](app/04-collector-tail-sampling.yaml).
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/refs/heads/main/app/01-instrumentation.yaml
@@ -141,6 +142,10 @@ make restart
 ![Global dropped/sampled](./images/p8s-tail-sampling-global.png)
 ![Sampled/no-sampled/dropped](./images/p8s-tail-sampling-sampled-dropped.png)
 ![Collector memory](./images/p8s-tails-sampling-memory.png)
+
+- [Sampled vs dropped](http://localhost:9090/query?g0.expr=sum+by+%28decision%29+%28rate%28otelcol_processor_tail_sampling_global_count_traces_sampled_total%5B5m%5D%29%29&g0.show_tree=0&g0.tab=graph&g0.range_input=1h&g0.res_type=auto&g0.res_density=medium&g0.display_mode=lines&g0.show_exemplars=0)
+- [Sampled vs dropper per policy](http://localhost:9090/query?g0.expr=sum+by+%28policy%2C+decision%29+%28rate%28otelcol_processor_tail_sampling_count_traces_sampled_total%5B5m%5D%29%29&g0.show_tree=0&g0.tab=graph&g0.range_input=1h&g0.res_type=auto&g0.res_density=medium&g0.display_mode=lines&g0.show_exemplars=0)
+- [Collector memory](http://localhost:9090/query?g0.expr=otelcol_process_memory_rss_bytes&g0.show_tree=0&g0.tab=graph&g0.range_input=1h&g0.res_type=auto&g0.res_density=medium&g0.display_mode=lines&g0.show_exemplars=0&g1.expr=otelcol_process_runtime_heap_alloc_bytes&g1.show_tree=0&g1.tab=graph&g1.range_input=1h&g1.res_type=auto&g1.res_density=medium&g1.display_mode=lines&g1.show_exemplars=0)
 
 ## Monitor tail sampling
 
