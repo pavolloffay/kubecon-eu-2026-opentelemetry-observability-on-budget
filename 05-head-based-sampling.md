@@ -186,7 +186,7 @@ Upstream SDK sampled at 50% → sends trace with th:8000...
 * proportional: Ignores th:, uses TraceID randomness → keeps 10% → effective 5%                                                                                                                                                                                                                                                               
 * equalizing:   Reads th:, sees 50% > 10% target → reduces to 10% → effective 10%
 
-Key takeaway: hash_seed and proportional behave similarly (both ignore upstream), but hash_seed uses a different randomness source (hash vs raw TraceID bits) and doesn't propagate the threshold downstream.
+Key takeaway: hash_seed and proportional behave similarly (both ignore upstream and write `th:` to tracestate), but hash_seed uses FNV hash with 14-bit precision while proportional uses raw TraceID bits with 56-bit precision.
 
 
 ### Exercise: Decrease traces and logs ingestion rate by 50%
