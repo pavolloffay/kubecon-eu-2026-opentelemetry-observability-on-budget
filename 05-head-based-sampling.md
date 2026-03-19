@@ -190,13 +190,21 @@ processors:
 
 ### Exercise: Decrease traces and logs ingestion rate by 50%
 
+* Add `probabilistic_sampler` to the collector [app/03-collector-data-profiling.yaml](./app/03-collector-data-profiling.yaml)
+
 ```yaml
 probabilistic_sampler:
-    mode: equalizing
-    sampling_percentage: 50
+  mode: equalizing
+  sampling_percentage: 50
+```
+
+```bash
+kubectl apply -f app/03-collector-data-profiling.yaml
 ```
 
 ![Spans per service](./images/p8s-collector-probabilistic-sampler.png)
+
+- [Span, metrics and logs per second by service](http://localhost:9090/query?g0.expr=sum+by+%28service_name%29+%28rate%28telemetry_spans_count_total%5B5m%5D%29%29&g0.show_tree=0&g0.tab=graph&g0.range_input=1h&g0.res_type=auto&g0.res_density=medium&g0.display_mode=lines&g0.show_exemplars=0&g1.expr=sum+by+%28service_name%29+%28rate%28telemetry_metrics_count_total%5B5m%5D%29%29&g1.show_tree=0&g1.tab=graph&g1.range_input=1h&g1.res_type=auto&g1.res_density=medium&g1.display_mode=lines&g1.show_exemplars=0&g2.expr=sum+by+%28service_name%29+%28rate%28telemetry_logs_count_total%5B5m%5D%29%29+&g2.show_tree=0&g2.tab=graph&g2.range_input=1h&g2.res_type=auto&g2.res_density=medium&g2.display_mode=lines&g2.show_exemplars=0)
 
 ### When to use it
 
