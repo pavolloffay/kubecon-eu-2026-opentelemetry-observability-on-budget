@@ -190,7 +190,7 @@ processors:
 
 ### Exercise: Decrease traces and logs ingestion rate by 50%
 
-* Add `probabilistic_sampler` to the collector [app/03-collector-data-profiling.yaml](./app/03-collector-data-profiling.yaml)
+* Enable `probabilistic_sampler` in the collector [app/03-collector-data-profiling.yaml](./app/03-collector-data-profiling.yaml) for traces and logs.
 
 ```yaml
 probabilistic_sampler:
