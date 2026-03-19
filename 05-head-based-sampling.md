@@ -122,7 +122,7 @@ Benefits:
 - Per-service and endpoint rates - critical services get higher sampling, noisy services get lower
 - Dynamic updates - change rates without redeploying applications
 
-### Exercise: Enable Jaeger remote sampling
+### (Optional) Exercise: Enable Jaeger remote sampling
 Change the [app/01-instrumentation.yaml](./app/01-instrumentation.yaml) and [app/03-collector-data-profiling.yaml](./app/03-collector-data-profiling.yaml).
 
 How is it supported in the SDKs?

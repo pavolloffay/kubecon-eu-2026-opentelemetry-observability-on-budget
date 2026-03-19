@@ -222,7 +222,7 @@ spec:
            - otlp
           processors:
 #            - filter/drop-health-spans
-            - probabilistic_sampler
+#            - probabilistic_sampler
             - batch
           exporters:
            - otlp_grpc
