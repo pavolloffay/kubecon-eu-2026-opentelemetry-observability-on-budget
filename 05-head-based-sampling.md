@@ -137,30 +137,6 @@ Head sampling can also be done in the collector using the [probabilistic sampler
 
 ### Sampling modes
 
-#### Equalizing
-
-* Items already sampled at a lower rate pass through; items sampled at a higher rate are further reduced.
-
-```yaml
-processors:
-  probabilistic_sampler:
-    mode: equalizing
-    sampling_percentage: 10
-```
-
-- Best for: ensuring a uniform sampling rate across services with different SDK configurations
-
-#### Proportional
-
-* Reduces items by a fixed ratio regardless of prior sampling decisions.
-
-```yaml
-processors:
-  probabilistic_sampler:
-    mode: proportional
-    sampling_percentage: 25
-```
-
 #### Hash Seed
 
 Uses the FNV hash function on the Trace ID (or a specified attribute for logs) and compares against the sampling percentage. Uses 14 bits of randomness.
@@ -177,14 +153,38 @@ processors:
 - Logs: can hash any attribute (useful when logs don't have a Trace ID)
 - Best for: simple percentage-based sampling, especially for logs
 
+#### Proportional
+
+* Reduces items by a fixed ratio regardless of prior sampling decisions.
+
+```yaml
+processors:
+  probabilistic_sampler:
+    mode: proportional
+    sampling_percentage: 25
+```
+
+#### Equalizing
+
+* Items already sampled at a lower rate pass through; items sampled at a higher rate are further reduced.
+
+```yaml
+processors:
+  probabilistic_sampler:
+    mode: equalizing
+    sampling_percentage: 10
+```
+
+- Best for: ensuring a uniform sampling rate across services with different SDK configurations
+
 ### Comparison
 Practical difference with 10%:
 
 Upstream SDK sampled at 50% → sends trace with th:8000...
 
-hash_seed:    Ignores th:, hashes TraceID → keeps 10% → effective 5%                                                                                                                                                                                                                                                                        
-proportional: Ignores th:, uses TraceID randomness → keeps 10% → effective 5%                                                                                                                                                                                                                                                               
-equalizing:   Reads th:, sees 50% > 10% target → reduces to 10% → effective 10%
+* hash_seed:    Ignores th:, hashes TraceID → keeps 10% → effective 5%                                                                                                                                                                                                                                                                        
+* proportional: Ignores th:, uses TraceID randomness → keeps 10% → effective 5%                                                                                                                                                                                                                                                               
+* equalizing:   Reads th:, sees 50% > 10% target → reduces to 10% → effective 10%
 
 Key takeaway: hash_seed and proportional behave similarly (both ignore upstream), but hash_seed uses a different randomness source (hash vs raw TraceID bits) and doesn't propagate the threshold downstream.
 
