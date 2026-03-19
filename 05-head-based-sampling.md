@@ -123,7 +123,7 @@ Benefits:
 - Dynamic updates - change rates without redeploying applications
 
 ### Exercise: Enable Jaeger remote sampling
-Change the [Instrumentation CR](./app/01-instrumentation.yaml) and [collector](./app/03-collector-data-profiling.yaml).
+Change the [app/01-instrumentation.yaml](./app/01-instrumentation.yaml) and [app/03-collector-data-profiling.yaml](./app/03-collector-data-profiling.yaml).
 
 How is it supported in the SDKs?
 - backend1 (Python) - not supported
@@ -133,7 +133,7 @@ How is it supported in the SDKs?
 
 ## Head sampling in the collector
 
-Head sampling can also be done in the collector using the [**probabilistic sampler processor**](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/probabilisticsamplerprocessor). Unlike SDK sampling, the collector samples after spans are already created and exported by the application. It supports both **traces** and **logs**.
+Head sampling can also be done in the collector using the [probabilistic sampler processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/probabilisticsamplerprocessor). Unlike SDK sampling, the collector samples after spans are already created and exported by the application. It supports both **traces** and **logs**.
 
 ### Sampling modes
 
