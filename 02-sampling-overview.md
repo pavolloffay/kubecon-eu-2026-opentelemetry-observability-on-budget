@@ -178,3 +178,6 @@ flowchart LR
 - Requires centralized collector
 - Adds latency before data reaches backend
 
+---
+
+[Next steps](./03-application.md)

@@ -202,7 +202,7 @@ Step 3: Calculate expected memory
 spans_in_memory     = incoming_spans_per_sec × decision_wait_seconds
 avg_span_size       = measure with file exporter (see below)
 buffer_memory       = spans_in_memory × avg_span_size
-total_memory        = baseline_memory + buffer_memory × 2 (Go runtime overhead)
+total_memory        = baseline_memory + buffer_memory × 2 (Go runtime overhead, e.g. garbace collector overhead)
 ```
 
 Example for our demo app (loadgen ~50 req/sec, ~15 spans per trace across 4 services):
@@ -211,9 +211,6 @@ Incoming spans:     ~750 spans/sec (from otelcol_receiver_accepted_spans_total)
 decision_wait:      10s
 Spans in memory:    750 × 10 = 7,500 spans
 Buffer memory:      7,500 × 2 KB = 15 MB
-Baseline memory:    ~215 MB (from otelcol_process_memory_rss_bytes)
-Total estimate:     215 MB + 15 MB × 2 ≈ 245 MB
-K8s memory limit:   ~370 MB (1.5x total for safety)
 ```
 
 For a production system with higher traffic:
@@ -222,18 +219,7 @@ Incoming spans:     10,000 spans/sec
 decision_wait:      30s
 Spans in memory:    10,000 × 30 = 300,000 spans
 Buffer memory:      300,000 × 2 KB = 600 MB
-Baseline memory:    100 MB
-Total estimate:     100 MB + 600 MB × 2 = 1.3 GB
-K8s memory limit:   ~2 GB (1.5x total for safety)
 ```
-
-**Step 4: Set `num_traces`**
-
-```
-num_traces = incoming_traces_per_sec × decision_wait_seconds × 1.5 (safety margin)
-```
-
-If `num_traces` is too low, traces are evicted before `decision_wait` expires and `otelcol_processor_tail_sampling_sampling_trace_dropped_too_early` increases.
 
 ### Measure average span size
 
@@ -306,7 +292,10 @@ flowchart LR
     style TS3 fill:#4CAF50
 ```
 
-See [collector configuration](./app/05-collector-scallable-tail-sampling.yaml)
+See [app/05-collector-scallable-tail-sampling.yaml](./app/05-collector-scallable-tail-sampling.yaml)
 
 The [load balancing exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/loadbalancingexporter) hashes trace IDs and routes all spans from the same trace to the same backend collector. This ensures complete traces for tail sampling decisions.
 
+---
+
+[Next steps](./07-logs-deduplication.md)

@@ -273,3 +273,7 @@ sampler:
 1. Fix at the source first - if a service emits debug logs in production, fix the application's log level. The collector filter is a safety net, not a permanent solution.
 1. Filter early - place the filter processor as early as possible in the pipeline (before batch) to reduce memory and CPU usage.
 1. Monitor what you drop - compare `otelcol_processor_filter_logs_filtered` with total logs to track how much is being filtered.
+
+---
+
+[Next steps](./05-head-based-sampling.md)

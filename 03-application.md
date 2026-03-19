@@ -183,3 +183,6 @@ make kind-load
 # Restart workloads
 make restart
 ```
+---
+
+[Next steps](./04-telemetry-data-profiling.md)

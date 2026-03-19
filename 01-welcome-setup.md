@@ -141,4 +141,4 @@ make docker-build
 
 ---
 
-[Next steps](./02-tracing-introduction.md)
+[Next steps](./02-sampling-overview.md)
