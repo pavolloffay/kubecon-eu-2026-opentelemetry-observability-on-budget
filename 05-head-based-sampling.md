@@ -94,7 +94,15 @@ spec:
 We are using the `Instrumentation` CR to manage the configuration for the SDKs in the cluster.
 Therefore we need to configure the sampling rate in the `Instrumentation` CR: `spec.sampler.argument: 0.5`.
 
-* Change the sampler argument to `0.5` in the [Instrumentation CR](./app/01-instrumentation.yaml)
+* Change the sampler argument to `0.5` in the [app/01-instrumentation.yaml](./app/01-instrumentation.yaml)
+
+```bash
+kubectl apply -f app/01-instrumentation.yaml
+make restart
+```
+
+![Drop in span count in receiver](./images/p8s-head-sampling-drop-receiver-accepted-spans.png)
+![Drop in span count](./images/p8s-head-sampling-drop-span-count.png)
 
 ## Jaeger remote sampling
 
