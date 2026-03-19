@@ -189,7 +189,7 @@ Upstream SDK sampled at 50% → sends trace with th:8000...
 Key takeaway: hash_seed and proportional behave similarly (both ignore upstream and write `th:` to tracestate), but hash_seed uses FNV hash with 14-bit precision while proportional uses raw TraceID bits with 56-bit precision.
 
 
-### Exercise: Decrease traces and logs ingestion rate by 50%
+### Exercise: Decrease traces and logs export rate by 50%
 
 * Enable `probabilistic_sampler` in the collector [app/03-collector-data-profiling.yaml](./app/03-collector-data-profiling.yaml) for traces and logs.
 
