@@ -67,6 +67,25 @@ Head-based sampling is configured in the SDK. The main built-in options are:
 | [ProbabilitySampler](https://opentelemetry.io/docs/specs/otel/trace/sdk/#probabilitysampler) | Samples based on W3C Trace Context Level 2 randomness (recommended) |
 | [ParentBased](https://opentelemetry.io/docs/specs/otel/trace/sdk/#parentbased) | Delegates to different samplers based on parent span's sampling decision |
 
+#### Code: ParentBased with ProbabilitySampler
+
+The recommended configuration wraps ProbabilitySampler with ParentBased. This ensures root spans use probability sampling while child spans respect the parent's decision.
+
+```go
+import "go.opentelemetry.io/otel/sdk/trace"
+
+sampler := trace.ParentBased(
+    trace.ProbabilitySampler(0.1), // 10% sampling for root spans
+)
+```
+
+The logic:
+- Root span (no parent) → ProbabilitySampler makes the decision
+- Child span with sampled parent → Always sampled (follows parent)
+- Child span with unsampled parent → Never sampled (follows parent)
+
+See [OpenTelemetry SDK Sampling documentation](https://opentelemetry.io/docs/specs/otel/trace/sdk/#sampling) for more details.
+
 #### TraceIdRatioBased vs ProbabilitySampler
 
 | Aspect | TraceIdRatioBased | ProbabilitySampler |
@@ -116,24 +135,6 @@ Estimated error rate      = 50/5,000      = 1%
 - SLO calculations - accurate error rate and latency percentiles require knowing the sampling bias
 - Billing and capacity planning - estimate actual request volumes from sampled data
 
-##### Code: ParentBased with ProbabilitySampler
-
-The recommended configuration wraps ProbabilitySampler with ParentBased. This ensures root spans use probability sampling while child spans respect the parent's decision.
-
-```go
-import "go.opentelemetry.io/otel/sdk/trace"
-
-sampler := trace.ParentBased(
-    trace.ProbabilitySampler(0.1), // 10% sampling for root spans
-)
-```
-
-The logic:
-- Root span (no parent) → ProbabilitySampler makes the decision
-- Child span with sampled parent → Always sampled (follows parent)
-- Child span with unsampled parent → Never sampled (follows parent)
-
-See [OpenTelemetry SDK Sampling documentation](https://opentelemetry.io/docs/specs/otel/trace/sdk/#sampling) for more details.
 
 ## Tail based sampling
 
