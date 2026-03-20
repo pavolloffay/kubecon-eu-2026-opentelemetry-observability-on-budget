@@ -2,11 +2,6 @@
 
 Welcome to the Observability on a Budget tutorial!
 
-This tutorial is continuation of:
-* [Kubecon EU 2024: Exploring the Power of Distributed Tracing with OpenTelemetry on Kubernetes](https://github.com/pavolloffay/kubecon-eu-2024-opentelemetry-kubernetes-tracing-tutorial)
-* [KubeCon NA 2023 OpenTelemetry metrics on Kubernetes tutorial](https://github.com/pavolloffay/kubecon-na-2023-opentelemetry-kubernetes-metrics-tutorial).
-* [KubeCon EU 2023 OpenTelemetry on Kubernetes tutorial](https://github.com/pavolloffay/kubecon-eu-2023-opentelemetry-kubernetes-tutorial).
-
 Today we will focus on understanding and reducing the observability cost. The tutorial will cover theory behind head and tail based sampling and
 practical application by using OpenTelemetry instrumentation and mostly collector.
 We will be deploying everything on Kubernetes and use Prometheus and Jaeger as backends.
