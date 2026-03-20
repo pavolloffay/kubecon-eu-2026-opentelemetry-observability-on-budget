@@ -26,7 +26,7 @@ The OpenTelemetry Collector exposes internal metrics that help understand how mu
                     insecure: true
 ```
 
-Full configuration is in [](./app/00-collector.yaml)
+Full configuration is in [app/00-collector.yaml](./app/00-collector.yaml)
 
 ## Profile telemetry
 
