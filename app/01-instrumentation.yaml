@@ -1,3 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tutorial-application
+  annotations:
+    kubecon-tutorial: otel-metrics
+---
 apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
 metadata:
