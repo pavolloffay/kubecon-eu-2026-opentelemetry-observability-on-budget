@@ -54,8 +54,10 @@ OTEL_TRACES_SAMPLER_ARG="0.2" # or for jaeger_remote|parentbased_jaeger_remote: 
 ### SDK
 
 ```go
-provider := trace.NewTracerProvider(
-    trace.WithSampler(trace.AlwaysSample()),
+import "go.opentelemetry.io/otel/sdk/trace"
+
+sampler := trace.ParentBased(
+trace.ProbabilitySampler(0.1), // 10% sampling for root spans
 )
 ```
 
