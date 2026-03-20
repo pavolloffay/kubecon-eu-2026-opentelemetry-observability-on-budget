@@ -56,12 +56,11 @@ Collector:
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/00-collector.yaml
 ```
 
-Loadgen:
+App:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/02-app.yaml
 ```
 
-App:
 ```bash
 kubectl get pods -n tutorial-application -w
 ...
@@ -73,6 +72,7 @@ frontend-deployment-678795956d-zwg4q   1/1     Running   0          62s
 loadgen-deployment-5c7d6896f8-2fz6h    1/1     Running   0          62s
 ```
 
+Loadgen:
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/app/loadgen.yaml
 ```
