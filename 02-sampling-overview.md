@@ -171,7 +171,6 @@ flowchart LR
 **Pros:**
 - Can make decisions based on trace outcome (errors, latency, specific attributes)
 - Ensures important traces are always captured
-- More intelligent sampling based on actual trace data
 
 **Cons:**
 - Higher resource overhead (memory to buffer traces)
