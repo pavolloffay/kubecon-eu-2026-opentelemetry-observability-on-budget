@@ -69,6 +69,13 @@ kubectl get pods -n opentelemetry-operator-system -w
 
 ### Deploy observability backend
 
+This course is all about Observabilty, so a backend is needed. If you don't have one, you can install Prometheus for metrics and Jaeger for traces as follows:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/backend/01-backend.yaml
+kubectl get pods -n observability-backend -w
+```
+
 ```mermaid
 flowchart LR
     subgraph "tutorial-application"
@@ -97,13 +104,6 @@ flowchart LR
     style C fill:#FFB74D
     style J fill:#4CAF50
     style P fill:#64B5F6
-```
-
-This course is all about Observabilty, so a backend is needed. If you don't have one, you can install Prometheus for metrics and Jaeger for traces as follows:
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/backend/01-backend.yaml
-kubectl get pods -n observability-backend -w
 ```
 
 Afterwards, the backend can be found in the namespace `observability-backend`.
