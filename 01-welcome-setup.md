@@ -102,7 +102,7 @@ flowchart LR
 This course is all about Observabilty, so a backend is needed. If you don't have one, you can install Prometheus for metrics and Jaeger for traces as follows:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2024-opentelemetry-kubernetes-tracing-tutorial/main/backend/01-backend.yaml
+kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-opentelemetry-observability-on-budget/main/backend/01-backend.yaml
 kubectl get pods -n observability-backend -w
 ```
 
