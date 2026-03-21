@@ -296,6 +296,98 @@ See [app/05-collector-scallable-tail-sampling.yaml](./app/05-collector-scallable
 
 The [load balancing exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/loadbalancingexporter) hashes trace IDs and routes all spans from the same trace to the same backend collector. This ensures complete traces for tail sampling decisions.
 
+## Span-to-Metrics via Connectors
+
+A powerful cost optimization strategy: derive metrics from traces before dropping spans. This gives you the best of both worlds - cheap metrics for dashboards and alerts, with sampled traces for debugging.
+
+### The spanmetrics connector
+
+The [spanmetrics connector](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/connector/spanmetricsconnector) generates RED (Rate, Error, Duration) metrics from spans passing through the pipeline.
+
+It's a great component to be used with tail-sampling because it traces are not yet sampled.
+
+```mermaid
+flowchart LR
+    subgraph "Services"
+        S1[Service A]
+        S2[Service B]
+    end
+
+    subgraph "Collector"
+        R[OTLP Receiver]
+        SM[spanmetrics<br/>connector]
+        TS[tail_sampling<br/>processor]
+        ME[Metrics Exporter]
+        TE[Traces Exporter]
+    end
+
+    S1 -->|spans| R
+    S2 -->|spans| R
+    R --> SM
+    SM -->|"100% metrics"| ME
+    R --> TS
+    TS -->|"10% traces"| TE
+
+    ME --> P[Prometheus]
+    TE --> J[Jaeger]
+
+    style SM fill:#4CAF50
+    style TS fill:#FFB74D
+    style P fill:#64B5F6
+    style J fill:#4CAF50
+```
+
+### Configuration
+
+```yaml
+connectors:
+  spanmetrics:
+    histogram:
+      explicit:
+        buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2.5s, 5s, 10s]
+    dimensions:
+      - name: http.method
+      - name: http.status_code
+      - name: http.route
+    exemplars:
+      enabled: true  # link metrics to trace examples
+    namespace: span.metrics
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [spanmetrics, otlp]  # spanmetrics as exporter
+    traces/sampling:
+      receivers: [otlp]
+      processors: [tail_sampling]
+      exporters: [otlp]
+    metrics:
+      receivers: [spanmetrics]        # spanmetrics as receiver
+      exporters: [prometheusremotewrite]
+```
+
+### Generated metrics
+
+The connector produces three metrics per span:
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `span.metrics.calls` | Counter | Total number of spans (request rate) |
+| `span.metrics.duration` | Histogram | Span duration distribution (latency) |
+| `span.metrics.duration.count` | Counter | Count of spans (same as calls) |
+
+Each metric includes dimensions like `service.name`, `span.name`, `span.kind`, `status.code`, plus any custom dimensions you configure.
+
+### Cost savings example
+
+Consider a service handling 10,000 requests/second with 5 spans per trace:
+
+| Approach | Data volume | Cost estimate |
+|----------|-------------|---------------|
+| 100% traces | 50,000 spans/sec × 2KB = 100 MB/sec | High |
+| 100% metrics + 1% traces | 3 metrics × 10,000/sec + 500 spans/sec | ~50x cheaper |
+
 ---
 
 [Next steps](./07-logs-deduplication.md)

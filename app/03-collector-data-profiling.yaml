@@ -223,11 +223,11 @@ spec:
           processors:
 #            - filter/drop-health-spans
 #            - probabilistic_sampler
-            - batch
+           - batch
           exporters:
            - otlp_grpc
-           -  debug
-           -  count
+           - debug
+           - count
         metrics:
           receivers:
            - otlp

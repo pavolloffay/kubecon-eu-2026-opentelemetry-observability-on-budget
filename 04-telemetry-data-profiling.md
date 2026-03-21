@@ -95,6 +95,12 @@ The count connector acts as both an **exporter** (receives data from the traces/
 - Signal imbalance - a service producing many logs but few traces (or vice versa) may indicate misconfiguration
 - Growth over time - compare volumes over hours/days to detect trends
 
+#### High cardinality metrics
+
+The count connector can help to identify potential cardinality issues, but cannot directly measure cardinality (unique label combinations).
+
+- [Top 10 highest cardinality + Time series count per metric](http://localhost:9090/query?g0.expr=topk%2810%2C+count+by+%28__name__%29+%28%7B__name__%3D~%22.%2B%22%7D%29%29&g0.show_tree=0&g0.tab=table&g0.range_input=1h&g1.expr=count+by+%28__name__%29+%28%7B__name__%3D~%22.%2B%22%7D%29&g1.show_tree=0&g1.tab=table&g1.range_input=1h)
+
 ### Count "malicious" telemetry data
 
 The count connector supports **conditions** using OTTL expressions. This lets you count spans/logs that exceed size thresholds and flag noisy workloads.
