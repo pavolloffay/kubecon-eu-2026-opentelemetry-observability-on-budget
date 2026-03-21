@@ -182,7 +182,13 @@ processors:
 ### Comparison
 Practical difference with 10%:
 
-Upstream SDK sampled at 50% → sends trace with th:8000...
+Upstream SDK sampled at 50% → sends trace with th:80000000000000
+```bash
+threshold = (1 - 0.5) × 2^56                                                                                                                                                                                                                                                                                                                
+          = 0.5 × 72057594037927936                                                                                                                                                                                                                                                                                                         
+          = 36028797018963968                                                                                                                                                                                                                                                                                                               
+          = 0x80000000000000 (hex)
+```
 
 * hash_seed:    Ignores th:, hashes TraceID → keeps 10% → effective 5%                                                                                                                                                                                                                                                                        
 * proportional: Ignores th:, uses TraceID randomness → keeps 10% → effective 5%                                                                                                                                                                                                                                                               
