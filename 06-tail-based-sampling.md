@@ -296,7 +296,7 @@ See [app/05-collector-scallable-tail-sampling.yaml](./app/05-collector-scallable
 
 The [load balancing exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/exporter/loadbalancingexporter) hashes trace IDs and routes all spans from the same trace to the same backend collector. This ensures complete traces for tail sampling decisions.
 
-## Span-to-Metrics via Connectors
+## Span Metrics Connector
 
 A powerful cost optimization strategy: derive metrics from traces before dropping spans. This gives you the best of both worlds - cheap metrics for dashboards and alerts, with sampled traces for debugging.
 

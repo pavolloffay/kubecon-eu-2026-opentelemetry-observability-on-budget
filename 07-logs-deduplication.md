@@ -29,20 +29,27 @@ processors:
 
 ### Monitoring deduplication
 
-The logdedup processor exposes metrics to track its effectiveness:
+The logdedup processor exposes one metric:
 
 ```promql
-# Logs aggregated (input to deduplication)
-otelcol_processor_logdedup_aggregated_logs_total
-
-# Logs exported (output after deduplication)
-otelcol_processor_logdedup_exported_logs_total
-
-# Deduplication ratio
-1 - (rate(otelcol_processor_logdedup_exported_logs_total[5m]) / rate(otelcol_processor_logdedup_aggregated_logs_total[5m]))
+# Histogram of log records aggregated together per deduplication batch
+otelcol_dedup_processor_aggregated_logs
 ```
 
-- [Logdedup processor metrics](http://localhost:9090/query?g0.expr=rate%28otelcol_processor_logdedup_aggregated_logs_total%5B5m%5D%29&g0.show_tree=0&g0.tab=graph&g0.range_input=1h&g1.expr=rate%28otelcol_processor_logdedup_exported_logs_total%5B5m%5D%29&g1.show_tree=0&g1.tab=graph&g1.range_input=1h&g2.expr=1+-+%28rate%28otelcol_processor_logdedup_exported_logs_total%5B5m%5D%29+%2F+rate%28otelcol_processor_logdedup_aggregated_logs_total%5B5m%5D%29%29&g2.show_tree=0&g2.tab=graph&g2.range_input=1h)
+To measure overall deduplication effectiveness, compare logs received vs exported:
+
+```promql
+# Logs received by collector (per namespace)
+sum by (k8s_namespace_name) (rate(otelcol_receiver_accepted_log_records_total[5m]))
+
+# Logs exported (after deduplication, per namespace)
+sum by (k8s_namespace_name) (rate(otelcol_exporter_sent_log_records_total[5m]))
+
+# Overall reduction ratio (per namespace)
+1 - (sum by (k8s_namespace_name) (rate(otelcol_exporter_sent_log_records_total[5m])) / sum by (k8s_namespace_name) (rate(otelcol_receiver_accepted_log_records_total[5m])))
+```
+
+- [Logdedup effectiveness](http://localhost:9090/query?g0.expr=otelcol_dedup_processor_aggregated_logs&g0.show_tree=0&g0.tab=graph&g0.range_input=1h&g1.expr=sum+by+%28k8s_namespace_name%29+%28rate%28otelcol_receiver_accepted_log_records_total%5B5m%5D%29%29&g1.show_tree=0&g1.tab=graph&g1.range_input=1h&g2.expr=sum+by+%28k8s_namespace_name%29+%28rate%28otelcol_exporter_sent_log_records_total%5B5m%5D%29%29&g2.show_tree=0&g2.tab=graph&g2.range_input=1h&g3.expr=1+-+%28sum+by+%28k8s_namespace_name%29+%28rate%28otelcol_exporter_sent_log_records_total%5B5m%5D%29%29+%2F+sum+by+%28k8s_namespace_name%29+%28rate%28otelcol_receiver_accepted_log_records_total%5B5m%5D%29%29%29&g3.show_tree=0&g3.tab=graph&g3.range_input=1h)
 
 ### Trade-offs
 
@@ -50,11 +57,12 @@ otelcol_processor_logdedup_exported_logs_total
 - Memory: Processor buffers unique logs during the interval
 - Loss of timing precision: Individual timestamps are lost for duplicates
 
-### Exercise: add duplicated logs and processor
+### Exercise: add duplicated logs and dedup processor
 
 * Add duplicated log to any service (frontend or backend) 
 * enable `logdedup` processor in [](./app/03-collector-data-profiling.yaml)
 
 
 ```bash
+kubectl apply -f ./app/03-collector-data-profiling.yaml
 ```
