@@ -93,6 +93,12 @@ spec:
         traces:
           span:
             - attributes["http.route"] == "/health"
+      logdedup:
+        interval: 10s
+        log_count_attribute: log_count
+        timezone: UTC
+        conditions:
+          - 'body == body'
 
     connectors:
       count:
@@ -251,6 +257,7 @@ spec:
 #            - filter/drop-debug-logs
 #            - filter/drop-large-logs
 #            - probabilistic_sampler
+#            - logdedup
             - batch
           exporters:
             - otlp_grpc

@@ -50,3 +50,11 @@ otelcol_processor_logdedup_exported_logs_total
 - Memory: Processor buffers unique logs during the interval
 - Loss of timing precision: Individual timestamps are lost for duplicates
 
+### Exercise: add duplicated logs and processor
+
+* Add duplicated log to any service (frontend or backend) 
+* enable `logdedup` processor in [](./app/03-collector-data-profiling.yaml)
+
+
+```bash
+```

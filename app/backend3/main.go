@@ -21,9 +21,9 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	sdklog "go.opentelemetry.io/otel/sdk/log"
 	otelmetric "go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/propagation"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
@@ -144,6 +144,8 @@ func main() {
 			os.Getenv("RATE_ERROR"), os.Getenv("RATE_HIGH_DELAY"), os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"), os.Getenv("OTEL_SERVICE_NAME"), os.Getenv("OTEL_RESOURCE_ATTRIBUTES"),
 			"goroutine 1 [running]:\nmain.rolldice()\n\t/app/main.go:115\nmain.main()\n\t/app/main.go:97\nruntime.main()\n\t/usr/local/go/src/runtime/proc.go:267\ngoroutine 2 [running]:\nmain.handler()\n\t/app/main.go:88\nnet/http.HandlerFunc.ServeHTTP()\n\t/usr/local/go/src/net/http/server.go:2136")
 		slog.DebugContext(r.Context(), debugMsg)
+		slog.Debug("rolldice")
+		slog.Debug("rolldice")
 		rollCounter.Add(r.Context(), 1)
 		numbersCounter.Add(r.Context(), 1, otelmetric.WithAttributes(attribute.String("number", resStr)))
 		if _, err := w.Write([]byte(resStr)); err != nil {

@@ -218,7 +218,6 @@ kubectl apply -f app/03-collector-data-profiling.yaml
 ### When to use it
 
 - You can't modify the application or SDK configuration (third-party services, legacy apps)
-- You want centralized sampling control without touching each service's config
 - As a safety net to enforce maximum ingestion rate even if SDKs are misconfigured
 
 ---
