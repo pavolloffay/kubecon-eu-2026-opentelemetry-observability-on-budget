@@ -79,7 +79,7 @@ kubectl apply -f https://raw.githubusercontent.com/pavolloffay/kubecon-eu-2026-o
 
 The frontend, backend1 and backed2 should have injected otel auto-instrumentation:
 ```bash
-kbectl get pods -n tutorial-application  frontend-deployment-67fc9977ff-wv9bk -o yaml                                                                                                                                                        ploffay@fedora
+kubectl get pods -n tutorial-application  frontend-deployment-67fc9977ff-wv9bk -o yaml                                                                                                                                                        ploffay@fedora
 apiVersion: v1
 kind: Pod
 metadata:
