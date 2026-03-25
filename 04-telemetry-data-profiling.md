@@ -240,7 +240,7 @@ Endpoints can be be excluded from tracing via SDK config e.g. `OTEL_PYTHON_EXCLU
 Add filtering to [app/03-collector-data-profiling.yaml](app/03-collector-data-profiling.yaml)
 
 ```bash
-kubctl apply -f app/03-collector-data-profiling.yaml
+kubectl apply -f app/03-collector-data-profiling.yaml
 ```
 
 The health traces are not completely removed:
